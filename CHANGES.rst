@@ -7,6 +7,8 @@ Changelog
 **Added**
 - Unit Conversions to allow results to be reported in alternative units
 
+- #594 Add button in Sample View for the createion of Analysis Requests
+- #607 Ability to choose sticker template based on sample type
 - #480 Sample panel in dashboard
 - #617 Instrument import interface: 2-Dimensional-CSV
 - #617 Instrument import interface: Agilent Masshunter
@@ -17,6 +19,7 @@ Changelog
 - #617 Instrument import interface: Shimadzu LC MS/MS Nexera X2
 - #537 Instrument import interface: Sysmex XT-4000i
 - #536 Instrument import interface: Sysmex XT-1800i
+- #607 Barcode and labelling depending on Sample Type
 - #618 When previewing stickers the number of copies to print for each sticker can be modified.
 - #618 The default number of sticker copies can be set and edited in the setup Sticker's tab.  
 
