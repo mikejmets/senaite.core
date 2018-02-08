@@ -307,7 +307,7 @@ class AnalysesView(BaseView):
 
             item['replace'] = {
                 'Pos': """<table width='100%' cellpadding='0' cellspacing='0'>
-                       <tr><td class='pos'>%s</td>""" % pos +
+                       <tr><td class='pos'>{}</td>""".format(pos) +
                        """<td align='right'>&nbsp;</td></tr></table>""",
                 'select_column': '',
             }
