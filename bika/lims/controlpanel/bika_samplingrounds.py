@@ -32,7 +32,7 @@ class SamplingRoundsView(BikaListingView):
         self.show_select_column = True
         self.pagesize = 25
         self.form_id = "samplinground"
-        self.icon = self.portal_url + "/++resource++bika.lims.images/instrumentcertification_big.png"
+        self.icon = self.portal_url + "/++resource++bika.lims.images/samplinground_big.png"
         self.title = self.context.translate(_("Sampling Rounds"))
         self.description = ""
         # Hide the ugly edit-bar with 'new', 'draft', etc

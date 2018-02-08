@@ -304,7 +304,7 @@
 
  <configlet title="Sampling Rounds" action_id="bika_samplingrounds"
     appId="bika.lims" category="bika" condition_expr=""
-    icon_expr="string:++resource++bika.lims.images/batch.png"
+    icon_expr="string:++resource++bika.lims.images/samplinground.png"
     url_expr="string:$portal_url/bika_setup/bika_samplingrounds"
     visible="True"
     i18n:attributes="title">
@@ -322,7 +322,7 @@
 
  <configlet title="Unit Conversions" action_id="bika_unitconversions"
     appId="bika.lims" category="bika" condition_expr=""
-    icon_expr="string:++resource++bika.lims.images/batch.png"
+    icon_expr="string:++resource++bika.lims.images/unitconversion.png"
     url_expr="string:$portal_url/bika_setup/bika_unitconversions"
     visible="True">
   <permission>BIKA: Manage Bika</permission>

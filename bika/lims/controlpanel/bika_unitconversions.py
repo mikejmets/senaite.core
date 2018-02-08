@@ -30,7 +30,7 @@ class UnitConversionsView(BikaListingView):
                  'icon': '++resource++bika.lims.images/add.png'}}
         self.title = self.context.translate(_("Unit Conversions"))
         self.icon = self.portal_url + \
-            "/++resource++bika.lims.images/analysisspec_big.png"
+            "/++resource++bika.lims.images/unitconversion_big.png"
         self.description = ""
         self.show_sort_column = False
         self.show_select_row = False

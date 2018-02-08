@@ -21,6 +21,7 @@ profile = 'profile-{0}:default'.format(product)
 @upgradestep(product, version)
 def upgrade(tool):
     portal = tool.aq_inner.aq_parent
+    setup = portal.portal_setup
     ut = UpgradeUtils(portal)
     ver_from = ut.getInstalledVersion(product)
 
@@ -33,13 +34,15 @@ def upgrade(tool):
 
     # -------- ADD YOUR STUFF HERE --------
 
+    setup.runImportStepFromProfile('profile-bika.lims:default', 'controlpanel')
     # Issue #574: Client batch listings are dumb.  This requires Batches to
     # be reindexed, as thy now provide an accessor for getClientUID.
     reindex_batch_getClientUID(portal)
 
     # The catalog where worksheets are stored (bika_catalog_worksheet_listing)
     # had a FieldIndex "WorksheetTemplate" which was causing a TypeError (can't
-    # pickle acquisition wrappers) when reindexing worksheets with an associated
+    # pickle acquisition wrappers) when reindexing worksheets with an
+    # associated
     # Worksheet Template.
     fix_worksheet_template_index(portal, ut)
 
@@ -66,6 +69,6 @@ def fix_worksheet_template_index(portal, ut):
                 'FieldIndex')
     ut.refreshCatalogs()
 
-    
+
 def add_sample_section_in_dashboard(portal):
     setup_dashboard_panels_visibility_registry('samples')
