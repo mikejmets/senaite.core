@@ -1,7 +1,26 @@
 Changelog
 =========
 
-1.2.2 (unreleased)
+
+1.2.3 (unreleased)
+------------------
+
+**Added**
+
+
+**Changed**
+
+
+**Removed**
+
+
+**Fixed**
+- #641 Broken Analyses list on ReferenceSample in Supplier
+
+**Security**
+
+
+1.2.2 (2018-02-09)
 ------------------
 
 **Added**
@@ -39,10 +58,15 @@ Changelog
 **Changed**
 
 - #627 Unassigned filter on Analysis Requests view
+**Changed**
+
+- #619 Changed listing tables search logic to operate on catalog metadata
 - #621 Change Errors to Warnings when importing instrument results
 
 **Fixed**
 
+- #639 Analysis Requests from inside Batch are not filtered correctly
+- #591 Fixed workflow publish recursion error that reached max depth
 - #634 Fix undefined Symbols in Sample Transition Guards
 - #616 Fix character encodings in analysisservice duplication
 - #624 TypeError: "Can't pickle objects in acquisition wrappers" (WorksheetTemplate)
@@ -52,9 +76,7 @@ Changelog
 - #622 (Re-)Installation always adds another identifier type
 - #620 Client batch list is not filtered by state
 - #628 Hide Department on lab contact inherited from Person
-
-**Security**
-
+- #631 Traceback on stickers display
 
 
 1.2.1 (2018-01-26)
@@ -135,7 +157,6 @@ Changelog
 
 **Fixed**
 
-- #631 Traceback on stickers display
 - #494 Rejection reasons widget does not appear on rejection
 - #492 Fix AR Add Form: CC Contacts not set on Contact Change
 - #489 Worksheet Templates selection list is empty in Worksheets view
