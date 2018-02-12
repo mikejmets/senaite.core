@@ -387,7 +387,7 @@
    */
 
   window.AnalysisRequestManageResultsView = function() {
-    var that;
+    var on_update_success, post_results, that;
     that = this;
 
     /**
@@ -415,6 +415,83 @@
           }
         });
       });
+      $('#calculate_transition').live('click', function(event) {
+        var el, form, item_data, results;
+        event.preventDefault();
+        el = event.currentTarget;
+        form = $(el).parents("form");
+        item_data = $(el).parents('table').prev('input[name="item_data"]').val();
+        results = CalculationUtils.prototype.collect_form_results();
+        post_results(form, item_data, results);
+      });
+    };
+    post_results = function(form, item_data, results) {
+
+      /*
+       * post all collected results to the backend with the current result's metadata
+       */
+      var options;
+      console.debug("CalculationUtils::post_results");
+      options = {
+        type: 'POST',
+        url: 're_calculate_all',
+        data: {
+          '_authenticator': $('input[name="_authenticator"]').val(),
+          'item_data': item_data,
+          'results': $.toJSON(results),
+          'specification': $(".specification").filter(".selected").attr("value")
+        },
+        dataType: "json",
+        success: function(data, textStatus, $XHR) {
+          on_update_success(form, data);
+        }
+      };
+      $.ajax(options);
+    };
+    on_update_success = function(form, data) {
+
+      /*
+       * clear out all row alerts for rows with fresh results
+       */
+      var i, result, u;
+      console.debug("CalculationUtils::on_update_success");
+      for (i in $(data['results'])) {
+        result = $(data['results'])[i];
+        $(".bika-alert").filter("span[uid='" + result.uid + "']").empty();
+      }
+      $.each(data['alerts'], function(auid, alerts) {
+        var lert;
+        for (i in alerts) {
+          lert = alerts[i];
+          $("span[uid='" + auid + "']").filter("span[field='" + lert.field + "']").append("<img src='" + window.portal_url + "/" + lert.icon + "' title='" + lert.msg + "' uid='" + auid + "'/>");
+        }
+      });
+      for (i in $(data['uncertainties'])) {
+        u = $(data['uncertainties'])[i];
+        $('#' + u.uid + "-uncertainty").val(u.uncertainty);
+        $('[uid="' + u.uid + '"][field="Uncertainty"]').val(u.uncertainty);
+      }
+      for (i in $(data['results'])) {
+        result = $(data['results'])[i];
+        $("input[uid='" + result.uid + "']").filter("input[field='Result']").val(result.result);
+        $('[type="hidden"]').filter("[field='ResultDM']").filter("[uid='" + result.uid + "']").val(result.dry_result);
+        $($('[type="hidden"]').filter("[field='ResultDM']").filter("[uid='" + result.uid + "']").siblings()[0]).empty().append(result.dry_result);
+        if (result.dry_result !== '') {
+          $($('[type="hidden"]').filter("[field='ResultDM']").filter("[uid='" + result.uid + "']").siblings().filter(".after")).empty().append("<em class='discreet'>%</em>");
+        }
+        $("input[uid='" + result.uid + "']").filter("input[field='formatted_result']").val(result.formatted_result);
+        $("span[uid='" + result.uid + "']").filter("span[field='formatted_result']").empty().append(result.formatted_result);
+        if (result.result !== '' && result.result !== "") {
+          if ($("[id*='cb_" + result.uid + "']").prop("checked") === false) {
+            $("[id*='cb_" + result.uid + "']").prop('checked', true);
+          }
+        }
+      }
+      if ($('.ajax_calculate_focus').length > 0) {
+        if ($(form).attr('submit_after_calculation')) {
+          $('#submit_transition').click();
+        }
+      }
     };
   };
 
@@ -483,8 +560,8 @@
        */
       row_data = $.parseJSON($('#' + service_uid + '_row_data').val());
       if (row_data !== '' && row_data !== void 0 && row_data !== null) {
-        if ("disabled" in row_data && row_data.disabled === true) {
-            return;
+        if ('disabled' in row_data && row_data.disabled === true) {
+          return;
         }
       }
       element = $('[name=\'Partition.' + service_uid + ':records\']');

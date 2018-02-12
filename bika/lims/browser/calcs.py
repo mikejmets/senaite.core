@@ -398,6 +398,53 @@ class ajaxCalculateAnalysisEntry(BrowserView):
                            'uncertainties': self.uncertainties,
                            'results': results})
 
+    def re_calculate_all(self):
+        self.rc = getToolByName(self.context, REFERENCE_CATALOG)
+        plone.protect.CheckAuthenticator(self.request)
+        plone.protect.PostOnly(self.request)
+
+        self.spec = self.request.get('specification', None)
+
+        # # information about the triggering element
+        # uid = self.request.get('uid')
+        # self.field = self.request.get('field')
+        # self.value = self.request.get('value')
+
+        self.current_results = json.loads(self.request.get('results'))
+        form_results = json.loads(self.request.get('results'))
+        self.item_data = json.loads(self.request.get('item_data'))
+
+        # these get sent back the the javascript
+        self.alerts = {}
+        self.uncertainties = []
+        self.results = []
+
+        self.services = {}
+        self.analyses = {}
+        # ignore these analyses if objects no longer exist
+        self.ignore_uids = []
+
+        for analysis_uid, result in self.current_results.items():
+            analysis = self.rc.lookupObject(analysis_uid)
+            if not analysis:
+                self.ignore_uids.append(analysis_uid)
+                continue
+            self.analyses[analysis_uid] = analysis
+
+        for uid in self.analyses.keys():
+            self.calculate(uid)
+
+        results = []
+        for result in self.results:
+            if result['uid'] in form_results.keys() and \
+               result['result'] != form_results[result['uid']]:
+                results.append(result)
+
+        print results
+        return json.dumps({'alerts': self.alerts,
+                           'uncertainties': self.uncertainties,
+                           'results': results})
+
 
 class ajaxGetMethodCalculation(BrowserView):
     """ Returns the calculation assigned to the defined method.

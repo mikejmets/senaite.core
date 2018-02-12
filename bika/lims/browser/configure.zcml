@@ -110,4 +110,13 @@
       layer="bika.lims.interfaces.IBikaLIMS"
       />
 
+  <browser:page
+      for="*"
+      name="re_calculate_all"
+      class="bika.lims.browser.calcs.ajaxCalculateAnalysisEntry"
+      attribute="re_calculate_all"
+      permission="zope2.View"
+      layer="bika.lims.interfaces.IBikaLIMS"
+    />
+
 </configure>

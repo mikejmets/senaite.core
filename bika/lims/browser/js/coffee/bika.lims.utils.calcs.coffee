@@ -70,20 +70,23 @@ class window.CalculationUtils
     $(el).removeAttr "focus_value"
     $(el).removeClass "ajax_calculate_focus"
 
-    form = $(el).parents("form")
-    uid = $(el).attr('uid')
-    field = $(el).attr('field')
-    value = $(el).attr('value')
-    item_data = $(el).parents('table').prev('input[name="item_data"]').val()
+    return
+    ###
+     *   form = $(el).parents("form")
+     *   uid = $(el).attr('uid')
+     *   field = $(el).attr('field')
+     *   value = $(el).attr('value')
+     *   item_data = $(el).parents('table').prev('input[name="item_data"]').val()
 
-    # clear alerts and add value to any interim field
-    @clear_alerts el, item_data, uid
+     *   # clear alerts and add value to any interim field
+     *   @clear_alerts el, item_data, uid
 
-    # collect all form results into a hash (by analysis UID)
-    results = @collect_form_results()
+     *   # collect all form results into a hash (by analysis UID)
+     *   results = @collect_form_results()
 
-    # post result to backend via ajax
-    @post_results form, uid, field, value, item_data, results
+     *   # post result to backend via ajax
+     *   @post_results form, uid, field, value, item_data, results
+    ###
 
     return
 

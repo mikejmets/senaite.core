@@ -30,6 +30,7 @@ class AnalysisRequestManageResultsView(AnalysisRequestViewView):
         elif not(getSecurityManager().checkPermission(EditResults, ar)):
             self.request.response.redirect(ar.absolute_url())
         else:
+
             self.tables = {}
             show_cats = self.context.bika_setup.getCategoriseAnalysisServices()
             for poc in POINTS_OF_CAPTURE:
@@ -45,6 +46,11 @@ class AnalysisRequestManageResultsView(AnalysisRequestViewView):
                     t.review_states[0]['transitions'] = [{'id': 'submit'},
                                                          {'id': 'retract'},
                                                          {'id': 'verify'}]
+                    t.review_states[0]['custom_transitions'] = [
+                        {
+                         'id': 'calculate',
+                         'title': _('Check Calculations'),
+                         'url': ''}]
                     t.show_select_column = True
                     poc_value = POINTS_OF_CAPTURE.getValue(poc)
                     self.tables[poc_value] = t.contents_table()
