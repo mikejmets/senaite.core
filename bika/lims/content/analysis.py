@@ -63,7 +63,6 @@ class Analysis(AbstractRoutineAnalysis):
 
         return siblings
 
-    @security.public
     def workflow_script_publish(self):
         """
         If this is not here, acquisition causes recursion into
@@ -72,6 +71,5 @@ class Analysis(AbstractRoutineAnalysis):
         depth exceeded"
         """
         pass
-
 
 registerType(Analysis, PROJECTNAME)
