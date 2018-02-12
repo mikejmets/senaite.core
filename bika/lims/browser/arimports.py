@@ -6,23 +6,36 @@
 # Some rights reserved. See LICENSE.rst, CONTRIBUTORS.rst.
 
 import csv
+import json
 from DateTime.DateTime import DateTime
+from bika.lims import api
 from bika.lims import bikaMessageFactory as _
+from bika.lims import logger
 from bika.lims.browser import BrowserView, ulocalized_time
 from bika.lims.browser.bika_listing import BikaListingView
+from bika.lims.content.arimport import get_row_container
+from bika.lims.content.arimport import get_row_profile_services
+from bika.lims.content.arimport import get_row_services
+from bika.lims.content.arimport import convert_date_string
+from bika.lims.content.arimport import lookup_sampler_uid
+from bika.lims.idserver import renameAfterCreation
 from bika.lims.interfaces import IClient
 from bika.lims.utils import tmpID
 from bika.lims.workflow import getTransitionDate
+from plone import api as ploneapi
 from plone.app.contentlisting.interfaces import IContentListing
 from plone.app.layout.globals.interfaces import IViewView
 from plone.protect import CheckAuthenticator
 from Products.Archetypes.utils import addStatusMessage
 from Products.CMFCore.utils import getToolByName
+from Products.Archetypes.event import ObjectInitializedEvent
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import _createObjectByType
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from zope.interface import alsoProvides
 from zope.interface import implements
+
+from zope import event
 
 import os
 
@@ -233,3 +246,164 @@ class ClientARImportAddView(BrowserView):
             if not existing:
                 return newname
             nr += 1
+
+
+class ARImportAsyncView(BrowserView):
+
+    def __call__(self):
+
+        form = self.request.form
+        gridrows = json.loads(form.get('gridrows', '[]'))
+        client_uid = form.get('client_uid', None)
+        if client_uid is None:
+            raise RuntimeError('ARImportAsyncView: client is required')
+        client = ploneapi.content.get(UID=client_uid)
+        batch = None
+        batch_uid = form.get('batch_uid', None)
+        if batch_uid is not None:
+            batch = ploneapi.content.get(UID=batch_uid)
+        client_ref = form.get('client_ref', None)
+        client_order_num = form.get('client_order_num', None)
+        contact = None
+        contact_uid = form.get('contact_uid', None)
+        if contact_uid is not None:
+            contact = ploneapi.content.get(UID=contact_uid)
+
+        workflow = ploneapi.portal.get_tool('portal_workflow')
+        bsc = ploneapi.portal.get_tool('bika_setup_catalog')
+        profiles = [x.getObject() for x in bsc(
+            portal_type='AnalysisProfile',
+            inactive_state='active')]
+
+        ar_list = []
+        error_list = []
+        row_cnt = 0
+        for therow in gridrows:
+            row = therow.copy()
+            row_cnt += 1
+            # Create Sample
+            sample = _createObjectByType('Sample', client, tmpID())
+            sample.unmarkCreationFlag()
+            # First convert all row values into something the field can take
+            sample.edit(**row)
+            sample._renameAfterCreation()
+            event.notify(ObjectInitializedEvent(sample))
+            sample.at_post_create_script()
+            bika_setup = api.get_bika_setup()
+            swe = bika_setup.getSamplingWorkflowEnabled()
+            if swe:
+                workflow.doActionFor(sample, 'sampling_workflow')
+            else:
+                workflow.doActionFor(sample, 'no_sampling_workflow')
+            part = _createObjectByType('SamplePartition', sample, 'part-1')
+            part.unmarkCreationFlag()
+            renameAfterCreation(part)
+            if swe:
+                workflow.doActionFor(part, 'sampling_workflow')
+            else:
+                workflow.doActionFor(part, 'no_sampling_workflow')
+            # Container is special... it could be a containertype.
+            container = get_row_container(row)
+            if container:
+                if container.portal_type == 'ContainerType':
+                    containers = container.getContainers()
+                # XXX And so we must calculate the best container for this partition
+                part.edit(Container=containers[0])
+
+            # Profiles are titles, profile keys, or UIDS: convert them to UIDs.
+            newprofiles = []
+            for title in row['Profiles']:
+                objects = []
+                for x in profiles:
+                    if title in (x.getProfileKey(), x.UID(), x.Title()):
+                        objects.append(x)
+                for obj in objects:
+                    newprofiles.append(obj.UID())
+            row['Profiles'] = newprofiles
+
+            # BBB in bika.lims < 3.1.9, only one profile is permitted
+            # on an AR.  The services are all added, but only first selected
+            # profile name is stored.
+            row['Profile'] = newprofiles[0] if newprofiles else None
+
+            # Same for analyses
+            (analyses, errors) = get_row_services(row)
+            if errors:
+                for err in errors:
+                    error_list(err)
+            newanalyses = set(analyses)
+            (analyses, errors) = get_row_profile_services(row)
+            if errors:
+                for err in errors:
+                    error_list(err)
+            newanalyses.update(analyses)
+            row['Analyses'] = []
+            # get batch
+            if batch is not None:
+                row['Batch'] = batch
+            # Add AR fields from schema into this row's data
+            if client_ref:
+                row['ClientReference'] = client_ref
+            if client_order_num:
+                row['ClientOrderNumber'] = client_order_num
+            if contact:
+                row['Contact'] = contact
+            row['DateSampled'] = convert_date_string(row['DateSampled'])
+            if row['Sampler']:
+                row['Sampler'] = lookup_sampler_uid(row['Sampler'])
+
+            # Create AR
+            ar = _createObjectByType("AnalysisRequest", client, tmpID())
+            ar.setSample(sample)
+            ar.unmarkCreationFlag()
+            ar.edit(**row)
+            ar._renameAfterCreation()
+            ar.setAnalyses(list(newanalyses))
+            for analysis in ar.getAnalyses(full_objects=True):
+                analysis.setSamplePartition(part)
+            ar.at_post_create_script()
+            if swe:
+                workflow.doActionFor(ar, 'sampling_workflow')
+            else:
+                workflow.doActionFor(ar, 'no_sampling_workflow')
+            ar_list.append(ar.getId())
+            logger.info('Created AR %s' % ar.getId())
+        logger.info('AR Import Complete')
+
+        # Email user
+        mail_template = """
+Dear {name},
+
+Analysis requests import complete
+{ars_msg}
+{error_msg}
+
+Cheers
+Bika LIMS
+"""
+        mail_host = ploneapi.portal.get_tool(name='MailHost')
+        from_email = mail_host.email_from_address
+        member = ploneapi.user.get_current()
+        to_email = member.getProperty('email')
+        subject = 'AR Import Complete'
+        name = member.getProperty('fullname')
+        if len(to_email) == 0:
+            to_email = from_email
+            name = 'Sys Admin'
+            subject = 'AR Import by admin user is complete'
+        error_msg = ''
+        if len(error_list):
+            error_msg = 'Errors:\n' + '\n'.join(error_list)
+
+        mail_text = mail_template.format(
+                        name=name,
+                        ars_msg='\n'.join(ar_list),
+                        error_msg=error_msg)
+        try:
+            mail_host.send(
+                        mail_text, to_email, from_email,
+                        subject=subject, charset="utf-8", immediate=False)
+        except smtplib.SMTPRecipientsRefused:
+            raise smtplib.SMTPRecipientsRefused(
+                        'Recipient address rejected by server')
+        logger.info('AR Import Completion emailed to %s' % to_email)
