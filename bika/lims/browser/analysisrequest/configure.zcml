@@ -103,6 +103,16 @@
     />
   <!-- /AR Add 2 -->
 
+  <!-- AR Import -->
+  <browser:page
+      for="*"
+      name="ar_import_async"
+      class="bika.lims.browser.arimports.ARImportAsyncView"
+      permission="zope2.View"
+      layer="bika.lims.interfaces.IBikaLIMS"
+    />
+  <!-- /AR Import -->
+
   <adapter
       factory="bika.lims.browser.analysisrequest.ClientContactVocabularyFactory"
       provides="bika.lims.interfaces.IDisplayListVocabulary"

@@ -19,7 +19,7 @@ from bika.lims.content.analysisrequest import schema as ar_schema
 from bika.lims.content.sample import schema as sample_schema
 from bika.lims.idserver import renameAfterCreation
 from bika.lims.interfaces import IARImport, IClient
-from bika.lims.utils import tmpID
+from bika.lims.utils import tmpID, getUsers
 from bika.lims.utils.analysisrequest import create_analysisrequest
 from bika.lims.vocabularies import CatalogVocabulary
 from bika.lims.workflow import doActionFor
@@ -41,6 +41,7 @@ from Products.DataGridField import DataGridWidget
 from Products.DataGridField import DateColumn
 from Products.DataGridField import LinesColumn
 from Products.DataGridField import SelectColumn
+from plone import api as ploneapi
 from zope import event
 from zope.event import notify
 from zope.i18nmessageid import MessageFactory
@@ -961,4 +962,182 @@ class ARImport(BaseFolder):
         self.setErrors(errors)
 
 
+def get_row_container(row):
+    """Return a sample container
+    """
+    bsc = ploneapi.portal.get_tool('bika_setup_catalog')
+    val = row.get('Container', False)
+    if val:
+        brains = bsc(portal_type='Container', UID=row['Container'])
+        if brains:
+            brains[0].getObject()
+        brains = bsc(portal_type='ContainerType', UID=row['Container'])
+        if brains:
+            # XXX Cheating.  The calculation of capacity vs. volume  is not done.
+            return brains[0].getObject()
+    return None
+
+
+def get_row_services(row):
+    """Return a list of services which are referenced in Analyses.
+    values may be UID, Title or Keyword.
+    """
+    bsc = ploneapi.portal.get_tool('bika_setup_catalog')
+    services = set()
+    errors = []
+    for val in row.get('Analyses', []):
+        brains = bsc(portal_type='AnalysisService', getKeyword=val)
+        if not brains:
+            brains = bsc(portal_type='AnalysisService', title=val)
+        if not brains:
+            brains = bsc(portal_type='AnalysisService', UID=val)
+        if brains:
+            services.add(brains[0].UID)
+        else:
+            errors.append("Invalid analysis specified: %s" % val)
+    return list(services), errors
+
+
+def get_row_profile_services(row):
+    """Return a list of services which are referenced in profiles
+    values may be UID, Title or ProfileKey.
+    """
+    bsc = ploneapi.portal.get_tool('bika_setup_catalog')
+    services = set()
+    errors = []
+    profiles = [x.getObject() for x in bsc(portal_type='AnalysisProfile')]
+    for val in row.get('Profiles', []):
+        objects = [x for x in profiles
+                   if val in (x.getProfileKey(), x.UID(), x.Title())]
+        if objects:
+            for service in objects[0].getService():
+                services.add(service.UID())
+        else:
+            errors.append("Invalid analysis specified: %s" % val)
+    return list(services), errors
+
+
+def arimport_create_analysis_requests(self, gridrows, client_uid):
+    workflow = ploneapi.portal.get_tool('portal_workflow')
+    bsc = ploneapi.portal.get_tool('bika_setup_catalog')
+    profiles = [x.getObject() for x in bsc(portal_type='AnalysisProfile')]
+
+    row_cnt = 0
+    for therow in gridrows:
+        row = therow.copy()
+        row_cnt += 1
+        # Create Sample
+        import pdb; pdb.set_trace()
+        sample = _createObjectByType('Sample', client, tmpID())
+        sample.unmarkCreationFlag()
+        # First convert all row values into something the field can take
+        sample.edit(**row)
+        sample._renameAfterCreation()
+        event.notify(ObjectInitializedEvent(sample))
+        sample.at_post_create_script()
+        bika_setup = api.get_bika_setup()
+        swe = bika_setup.getSamplingWorkflowEnabled()
+        if swe:
+            workflow.doActionFor(sample, 'sampling_workflow')
+        else:
+            workflow.doActionFor(sample, 'no_sampling_workflow')
+        part = _createObjectByType('SamplePartition', sample, 'part-1')
+        part.unmarkCreationFlag()
+        renameAfterCreation(part)
+        if swe:
+            workflow.doActionFor(part, 'sampling_workflow')
+        else:
+            workflow.doActionFor(part, 'no_sampling_workflow')
+        # Container is special... it could be a containertype.
+        container = get_row_container(row)
+        if container:
+            if container.portal_type == 'ContainerType':
+                containers = container.getContainers()
+            # XXX And so we must calculate the best container for this partition
+            part.edit(Container=containers[0])
+
+        # Profiles are titles, profile keys, or UIDS: convert them to UIDs.
+        newprofiles = []
+        for title in row['Profiles']:
+            objects = [x for x in profiles
+                       if title in (x.getProfileKey(), x.UID(), x.Title())]
+            for obj in objects:
+                newprofiles.append(obj.UID())
+        row['Profiles'] = newprofiles
+
+        # BBB in bika.lims < 3.1.9, only one profile is permitted
+        # on an AR.  The services are all added, but only first selected
+        # profile name is stored.
+        row['Profile'] = newprofiles[0] if newprofiles else None
+
+        # Same for analyses
+        (analyses, errors) = get_row_services(row)
+        if errors:
+            for err in errors:
+                self.error(err)
+        newanalyses = set(analyses)
+        (analyses, errors) = get_row_profile_services(row)
+        if errors:
+            for err in errors:
+                self.error(err)
+        newanalyses.update(analyses)
+        row['Analyses'] = []
+        # get batch
+        batch = self.schema['Batch'].get(self)
+        if batch:
+            row['Batch'] = batch
+        # Add AR fields from schema into this row's data
+        row['ClientReference'] = self.getClientReference()
+        row['ClientOrderNumber'] = self.getClientOrderNumber()
+        row['Contact'] = self.getContact()
+        row['DateSampled'] = convert_date_string(row['DateSampled'])
+        if row['Sampler']:
+            row['Sampler'] = lookup_sampler_uid(row['Sampler'])
+
+        # Create AR
+        ar = _createObjectByType("AnalysisRequest", client, tmpID())
+        ar.setSample(sample)
+        ar.unmarkCreationFlag()
+        ar.edit(**row)
+        ar._renameAfterCreation()
+        ar.setAnalyses(list(newanalyses))
+        for analysis in ar.getAnalyses(full_objects=True):
+            analysis.setSamplePartition(part)
+        ar.at_post_create_script()
+        if swe:
+            workflow.doActionFor(ar, 'sampling_workflow')
+        else:
+            workflow.doActionFor(ar, 'no_sampling_workflow')
+        #progress_index = float(row_cnt) / len(gridrows) * 100
+        #progress = ProgressState(self.REQUEST, progress_index)
+        #notify(UpdateProgressEvent(progress))
+
+def convert_date_string(datestr):
+    return datestr.replace('-', '/')
+
+
+def lookup_sampler_uid(import_user):
+    # Lookup sampler's uid
+    found = False
+    userid = None
+    user_ids = []
+    portal = ploneapi.portal.get()
+    users = getUsers(portal, ['LabManager', 'Sampler']).items()
+    for (samplerid, samplername) in users:
+        if import_user == samplerid:
+            found = True
+            userid = samplerid
+            break
+        if import_user == samplername:
+            user_ids.append(samplerid)
+    if found:
+        return userid
+    if len(user_ids) == 1:
+        return user_ids[0]
+    if len(user_ids) > 1:
+        # raise ValueError('Sampler %s is ambiguous' % import_user)
+        return ''
+    # Otherwise
+    # raise ValueError('Sampler %s not found' % import_user)
+    return ''
 atapi.registerType(ARImport, PROJECTNAME)
