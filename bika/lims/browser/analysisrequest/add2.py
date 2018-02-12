@@ -30,7 +30,7 @@ from bika.lims import api
 from bika.lims import bikaMessageFactory as _
 from bika.lims import logger
 from bika.lims.interfaces import IGetDefaultFieldValueARAddHook
-from bika.lims.utils import tmpID
+from bika.lims.utils import tmpID, getUsers
 from bika.lims.utils.analysisrequest import create_analysisrequest as crar
 
 AR_CONFIGURATION_STORAGE = "bika.lims.browser.analysisrequest.manage.add"
@@ -296,6 +296,15 @@ class AnalysisRequestAddView(BrowserView):
             sample = self.get_sample()
             if sample is not None:
                 default = sample
+        if name == "Sampler":
+            sampler = self.get_sampler()
+            if sampler is not None:
+                default = sampler
+        if name == 'ClientLicenceID':
+            clientlicence = self.get_client_licences()
+            if clientlicence is not None:
+                default = clientlicence
+
         # Querying for adapters to get default values from add-ons':
         # We don't know which fields the form will render since
         # some of them may come from add-ons. In order to obtain the default
@@ -359,6 +368,32 @@ class AnalysisRequestAddView(BrowserView):
             return context
         elif parent.portal_type == "Batch":
             return parent
+        return None
+
+    def get_sampler(self):
+        """Returns the Sampler
+        """
+        if len(getUsers(self, ['Sampler', ])) == 1:
+            return getUsers(self, ['Sampler', ])[1]
+        return None
+
+    def get_client_licences(self):
+        """Returns the ClientLicenceID
+        """
+        pc = api.get_tool("portal_catalog")
+        licences = []
+        client = self.get_client()
+        for licence in client.getLicences():
+            licence_types = pc(
+                    portal_type='ClientLicenceType',
+                    UID=licence['LicenceType'])
+            if len(licence_types) == 1:
+                licence_type = licence_types[0].Title
+                id_value = '{},{LicenceID},{LicenceNumber},{Authority}'
+                id_value = id_value.format(licence_type, **licence)
+                licences.append([id_value])
+        if len(licences) == 1:
+            return licences[0]
         return None
 
     def get_parent_ar(self, ar):
