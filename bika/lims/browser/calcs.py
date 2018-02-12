@@ -139,11 +139,16 @@ class ajaxCalculateAnalysisEntry(BrowserView):
                 # All result mappings must be float, or they are ignored.
                 try:
                     mapping[key] = float(analysisvalues.get('result'))
-                    mapping['%s.%s' % (key, 'RESULT')] = float(analysisvalues.get('result'))
-                    mapping['%s.%s' % (key, 'LDL')] = float(analysisvalues.get('ldl'))
-                    mapping['%s.%s' % (key, 'UDL')] = float(analysisvalues.get('udl'))
-                    mapping['%s.%s' % (key, 'BELOWLDL')] = int(analysisvalues.get('belowldl'))
-                    mapping['%s.%s' % (key, 'ABOVEUDL')] = int(analysisvalues.get('aboveudl'))
+                    mapping['%s.%s' % (key, 'RESULT')] = float(
+                        analysisvalues.get('result'))
+                    mapping['%s.%s' % (key, 'LDL')] = float(
+                        analysisvalues.get('ldl'))
+                    mapping['%s.%s' % (key, 'UDL')] = float(
+                        analysisvalues.get('udl'))
+                    mapping['%s.%s' % (key, 'BELOWLDL')] = int(
+                        analysisvalues.get('belowldl'))
+                    mapping['%s.%s' % (key, 'ABOVEUDL')] = int(
+                        analysisvalues.get('aboveudl'))
                 except:
                     # If not floatable, then abort!
                     unsatisfied = True
@@ -183,9 +188,9 @@ class ajaxCalculateAnalysisEntry(BrowserView):
                     if uid == i_uid:
                         mapping[i['keyword']] = i['value']
 
-            # Grab values for hidden InterimFields for only for current calculation
-            # we can't allow non-floats through here till we change the eval's
-            # interpolation
+            # Grab values for hidden InterimFields for only for current
+            # calculation # we can't allow non-floats through here till
+            # we change the eval's interpolation
             hidden_fields = []
             c_fields = calculation.getInterimFields()
             s_fields = analysis.getInterimFields()
@@ -259,8 +264,9 @@ class ajaxCalculateAnalysisEntry(BrowserView):
 
         # format result
         try:
-            Result['formatted_result'] = format_numeric_result(analysis,
-                                                               Result['result'])
+            Result['formatted_result'] = format_numeric_result(
+                analysis,
+                Result['result'])
         except ValueError:
             # non-float
             Result['formatted_result'] = Result['result']
@@ -315,7 +321,8 @@ class ajaxCalculateAnalysisEntry(BrowserView):
             udl = float(udl) if isnumber(udl) else 10000000
             belowldl = (isldl or flres < ldl)
             aboveudl = (isudl or flres > udl)
-            unc = '' if (belowldl or aboveudl) else analysis.getUncertainty(Result.get('result'))
+            unc = '' if (belowldl or aboveudl) \
+                else analysis.getUncertainty(Result.get('result'))
             if not (belowldl or aboveudl):
                 self.uncertainties.append({'uid': uid, 'uncertainty': unc})
 
@@ -337,7 +344,8 @@ class ajaxCalculateAnalysisEntry(BrowserView):
         # we're placing the entire form's results in kwargs.
         adapters = getAdapters((analysis, ), IFieldIcons)
         for name, adapter in adapters:
-            alerts = adapter(result=Result['result'], form_results=self.current_results)
+            alerts = adapter(result=Result['result'],
+                             form_results=self.current_results)
             if alerts:
                 if analysis.UID() in self.alerts:
                     self.alerts[analysis.UID()].extend(alerts[analysis.UID()])
