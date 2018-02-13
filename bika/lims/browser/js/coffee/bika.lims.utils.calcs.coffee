@@ -66,30 +66,36 @@ class window.CalculationUtils
     ###
     console.debug "CalculationUtils::on_result_change"
     el = event.currentTarget
-
+    form = $(el).parents("form")
+    if @all_results_captured(form) == false
+      return
+      
     $(el).removeAttr "focus_value"
     $(el).removeClass "ajax_calculate_focus"
 
-    return
-    ###
-     *   form = $(el).parents("form")
-     *   uid = $(el).attr('uid')
-     *   field = $(el).attr('field')
-     *   value = $(el).attr('value')
-     *   item_data = $(el).parents('table').prev('input[name="item_data"]').val()
+    uid = $(el).attr('uid')
+    field = $(el).attr('field')
+    value = $(el).attr('value')
+    item_data = $(el).parents('table').prev('input[name="item_data"]').val()
 
-     *   # clear alerts and add value to any interim field
-     *   @clear_alerts el, item_data, uid
+    # clear alerts and add value to any interim field
+    @clear_alerts el, item_data, uid
 
-     *   # collect all form results into a hash (by analysis UID)
-     *   results = @collect_form_results()
+    # collect all form results into a hash (by analysis UID)
+    results = @collect_form_results()
 
-     *   # post result to backend via ajax
-     *   @post_results form, uid, field, value, item_data, results
-    ###
+    # post result to backend via ajax
+    @post_results form, uid, field, value, item_data, results
 
     return
 
+
+  all_results_captured: (form) =>
+    results = form.find('.ajax_calculate')
+    for i of results
+      if results[i].value and results[i].value.length == 0
+        return false
+    return true
 
   clear_alerts: (element, item_data, uid) =>
     ###

@@ -12,6 +12,7 @@
       this.on_update_success = bind(this.on_update_success, this);
       this.collect_form_results = bind(this.collect_form_results, this);
       this.clear_alerts = bind(this.clear_alerts, this);
+      this.all_results_captured = bind(this.all_results_captured, this);
       this.on_result_change = bind(this.on_result_change, this);
       this.on_result_blur = bind(this.on_result_blur, this);
       this.on_result_focus = bind(this.on_result_focus, this);
@@ -69,29 +70,33 @@
        * Eventhandler when Result field looses focus and 
        * the value has change
        */
-      var el;
+      var el, field, form, item_data, results, uid, value;
       console.debug("CalculationUtils::on_result_change");
       el = event.currentTarget;
+      form = $(el).parents("form");
+      if (this.all_results_captured(form) === false) {
+        return;
+      }
       $(el).removeAttr("focus_value");
       $(el).removeClass("ajax_calculate_focus");
-      return;
+      uid = $(el).attr('uid');
+      field = $(el).attr('field');
+      value = $(el).attr('value');
+      item_data = $(el).parents('table').prev('input[name="item_data"]').val();
+      this.clear_alerts(el, item_data, uid);
+      results = this.collect_form_results();
+      this.post_results(form, uid, field, value, item_data, results);
+    };
 
-      /*
-       *   form = $(el).parents("form")
-       *   uid = $(el).attr('uid')
-       *   field = $(el).attr('field')
-       *   value = $(el).attr('value')
-       *   item_data = $(el).parents('table').prev('input[name="item_data"]').val()
-      
-       *   # clear alerts and add value to any interim field
-       *   @clear_alerts el, item_data, uid
-      
-       *   # collect all form results into a hash (by analysis UID)
-       *   results = @collect_form_results()
-      
-       *   # post result to backend via ajax
-       *   @post_results form, uid, field, value, item_data, results
-       */
+    CalculationUtils.prototype.all_results_captured = function(form) {
+      var i, results;
+      results = form.find('.ajax_calculate');
+      for (i in results) {
+        if (results[i].value && results[i].value.length === 0) {
+          return false;
+        }
+      }
+      return true;
     };
 
     CalculationUtils.prototype.clear_alerts = function(element, item_data, uid) {
