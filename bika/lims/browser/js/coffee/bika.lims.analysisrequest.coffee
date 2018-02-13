@@ -423,84 +423,26 @@ window.AnalysisRequestManageResultsView = ->
       el = event.currentTarget
       form = $(el).parents("form")
       item_data = $(el).parents('table').prev('input[name="item_data"]').val()
+
+      el = form.find('.ajax_calculate').first();
+      uid = $(el).attr('uid')
+      field = $(el).attr('field')
+      value = $(el).attr('value')
+
+      # clear alerts and add value to any interim field
+      CalculationUtils.prototype.clear_alerts el, item_data, uid
+
+      # collect all form results into a hash (by analysis UID)
       results = CalculationUtils.prototype.collect_form_results()
-      post_results form, item_data, results
+
+      # post result to backend via ajax
+      CalculationUtils.prototype.post_results form, uid, field, value, item_data, results
       return
 
     return
 
-  post_results = (form, item_data, results) ->
-    ###
-     * post all collected results to the backend with the current result's metadata
-    ###
-    console.debug "CalculationUtils::post_results"
-    options = 
-        type: 'POST'
-        url: 're_calculate_all'
-        data: 
-            '_authenticator': $('input[name="_authenticator"]').val()
-            'item_data': item_data
-            'results': $.toJSON(results)
-            'specification': $(".specification").filter(".selected").attr("value")
-        dataType: "json"
-        success: (data, textStatus, $XHR) ->
-          on_update_success form, data
-          return
-    $.ajax(options)
-    return
-
-  on_update_success = (form, data) ->
-    ###
-     * clear out all row alerts for rows with fresh results
-    ###
-    console.debug "CalculationUtils::on_update_success"
-    for i of $(data['results'])
-        result = $(data['results'])[i]
-        $(".bika-alert").filter("span[uid='"+result.uid+"']").empty()
-  
-    # put new alerts
-    $.each data['alerts'], (auid, alerts) ->
-        for i of alerts
-            lert = alerts[i]
-            $("span[uid='"+auid+"']")
-                .filter("span[field='"+lert.field+"']")
-                .append("<img src='"+window.portal_url+"/"+lert.icon+
-                    "' title='"+lert.msg+
-                    "' uid='"+auid+
-                    "'/>")
-        return
-  
-    # Update uncertainty value
-    for i of $(data['uncertainties'])
-        u = $(data['uncertainties'])[i]
-        $('#'+u.uid+"-uncertainty").val(u.uncertainty)
-        $('[uid="'+u.uid+'"][field="Uncertainty"]').val(u.uncertainty)
-    
-    # put result values in their boxes
-    for i of $(data['results'])
-        result = $(data['results'])[i]
-        $("input[uid='"+result.uid+"']").filter("input[field='Result']").val(result.result)
-  
-        $('[type="hidden"]').filter("[field='ResultDM']").filter("[uid='"+result.uid+"']").val(result.dry_result)
-        $($('[type="hidden"]').filter("[field='ResultDM']").filter("[uid='"+result.uid+"']").siblings()[0]).empty().append(result.dry_result)
-        if result.dry_result != ''
-            $($('[type="hidden"]').filter("[field='ResultDM']").filter("[uid='"+result.uid+"']").siblings().filter(".after")).empty().append("<em class='discreet'>%</em>")
-        
-  
-        $("input[uid='"+result.uid+"']").filter("input[field='formatted_result']").val(result.formatted_result)
-        $("span[uid='"+result.uid+"']").filter("span[field='formatted_result']").empty().append(result.formatted_result)
-  
-        # check box
-        if result.result != '' && result.result != ""
-            if $("[id*='cb_"+result.uid+"']").prop("checked") == false
-                $("[id*='cb_"+result.uid+"']").prop('checked', true)
-  
-    if $('.ajax_calculate_focus').length > 0
-        if $(form).attr 'submit_after_calculation'
-            $('#submit_transition').click()
-
-    return
   return
+
 ###*
 # Controller class for Analysis Request Analyses view
 ###
