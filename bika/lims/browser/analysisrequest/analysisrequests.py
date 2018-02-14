@@ -22,7 +22,7 @@ from bika.lims.browser.bika_listing import BikaListingView
 from bika.lims.catalog import CATALOG_ANALYSIS_REQUEST_LISTING
 from bika.lims.config import PRIORITIES
 from bika.lims.permissions import SampleSample, ManageAnalysisRequests, \
-        AddAnalysisRequest
+    AddAnalysisRequest
 from bika.lims.permissions import Verify as VerifyPermission
 from bika.lims.utils import getUsers
 from bika.lims.utils import t
@@ -283,10 +283,10 @@ class AnalysisRequestsView(BikaListingView):
                                'sort_on': 'Created',
                                'sort_order': 'reverse'},
              'transitions': [
-                             {'id': 'sample'},
-                             {'id': 'submit'},
-                             {'id': 'cancel'},
-                            ],
+                {'id': 'sample'},
+                {'id': 'submit'},
+                {'id': 'cancel'},
+             ],
              'custom_transitions': [{
                  'id': 'print_stickers',
                  'title': _('Print stickers'),
@@ -686,11 +686,10 @@ class AnalysisRequestsView(BikaListingView):
                          'getDatePublished']},
             {'id': 'assigned',
              'title': "<img title='%s'\
-                       src='%s/++resource++bika.lims.images/assigned.png'/>" \
-                       % (t(_("Assigned")), self.portal_url),
-             'contentFilter': {'worksheetanalysis_review_state': 'assigned',
-                               'review_state': ('sample_received',
-                                                'to_be_verified',
+                       src='%s/++resource++bika.lims.images/assigned.png'/>" % (
+                       t(_("Assigned")), self.portal_url),
+             'contentFilter': {'assigned_state': 'assigned',
+                               'review_state': ('sample_received', 'to_be_verified',
                                                 'attachment_due', 'verified',
                                                 'published'),
                                'sort_on': 'Created',
@@ -737,12 +736,12 @@ class AnalysisRequestsView(BikaListingView):
                          'state_title']},
             {'id': 'unassigned',
              'title': "<img title='%s'\
-                       src='%s/++resource++bika.lims.images/unassigned.png'/>"\
-                       % (t(_("Unassigned")), self.portal_url),
-             'contentFilter': {'worksheetanalysis_review_state': 'unassigned',
-                               'cancellation_state': 'active',
-                               'review_state': ('sample_received',
-                                                'attachment_due',),
+                       src='%s/++resource++bika.lims.images/unassigned.png'/>" % (
+                       t(_("Unassigned")), self.portal_url),
+             'contentFilter': {'assigned_state': 'unassigned',
+                               'review_state': ('sample_received', 'to_be_verified',
+                                                'attachment_due', 'verified',
+                                                'published'),
                                'sort_on': 'Created',
                                'sort_order': 'reverse'},
              'transitions': [{'id': 'receive'},
@@ -965,11 +964,9 @@ class AnalysisRequestsView(BikaListingView):
         after_icons = ""
         # Getting a dictionary with each workflow id and current state in it
         states_dict = obj.getObjectWorkflowStates
-        if states_dict.get('worksheetanalysis_review_state', '') == 'assigned':
-            after_icons += \
-                """<img src='%s/++resource++bika.lims.images/worksheet.png'
-                    title='%s'/>
-                """ % (self.portal_url, t(_("All analyses assigned")))
+        if obj.assigned_state == 'assigned':
+            after_icons += "<img src='%s/++resource++bika.lims.images/worksheet.png' title='%s'/>" % \
+                (self.portal_url, t(_("All analyses assigned")))
         if states_dict.get('review_state', '') == 'invalid':
             after_icons += \
                 """<img src='%s/++resource++bika.lims.images/delete.png'
