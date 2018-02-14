@@ -5,9 +5,7 @@
 # Copyright 2018 by it's authors.
 # Some rights reserved. See LICENSE.rst, CONTRIBUTORS.rst.
 
-import csv
 import json
-from DateTime.DateTime import DateTime
 from bika.lims import api
 from bika.lims import bikaMessageFactory as _
 from bika.lims import logger
@@ -82,6 +80,20 @@ class ARImportsView(BikaListingView):
             'state_title': {'title': _('State')},
         }
         self.review_states = [
+            {'id': 'all',
+             'title': _('All'),
+             'contentFilter': {'review_state': ['invalid', 'valid',
+                                                'imported', 'initial']},
+             'transitions': [{'id': 'cancel'},],
+             'custom_actions': [],
+             'columns': ['Title',
+                         'Creator',
+                         'Filename',
+                         'Client',
+                         'DateCreated',
+                         'DateValidated',
+                         'DateImported',
+                         'state_title']},
             {'id': 'default',
              'title': _('Pending'),
              'contentFilter': {'review_state': ['invalid', 'valid']},
@@ -157,6 +169,19 @@ class ClientARImportsView(ARImportsView):
         }
 
         self.review_states = [
+            {'id': 'all',
+             'title': _('All'),
+             'contentFilter': {'review_state': ['invalid', 'valid',
+                                                'imported', 'initial']},
+             'transitions': [{'id': 'cancel'}],
+             'custom_actions': [],
+             'columns': ['Title',
+                         'Creator',
+                         'Filename',
+                         'DateCreated',
+                         'DateValidated',
+                         'DateImported',
+                         'state_title']},
             {'id': 'default',
              'title': _('Pending'),
              'contentFilter': {'review_state': ['invalid', 'valid']},
