@@ -118,7 +118,7 @@ def doActionFor(instance, action_id, active_only=True,
     if queue_it:
         # hand over this task to the task queue
         return doAsyncActionFor(
-                instance, action_id, active_only, allowed_transition)
+            instance, action_id, active_only, allowed_transition)
 
     try:
         workflow.doActionFor(instance, action_id)
@@ -382,8 +382,7 @@ def getCurrentState(obj, stateflowid='review_state'):
     """ The current state of the object for the state flow id specified
         Return empty if there's no workflow state for the object and flow id
     """
-    wf = getToolByName(obj, 'portal_workflow')
-    return wf.getInfoFor(obj, stateflowid, '')
+    return api.get_workflow_status_of(obj, stateflowid)
 
 
 def in_state(obj, states, stateflowid='review_state'):
@@ -573,7 +572,7 @@ def doAsyncActionFor(
         logger.info('Do NOT Queue object %s for transition %s' % (
             instance.getId(), action_id))
         return doActionFor(
-                instance, action_id, active_only, allowed_transition)
+            instance, action_id, active_only, allowed_transition)
 
     logger.info('Queue object %s for transition %s' % (
         instance.getId(), action_id))
@@ -582,15 +581,15 @@ def doAsyncActionFor(
     path = '/'.join(path)
 
     params = {
-            'obj_uid': instance.UID(),
-            'action_id': action_id,
-            'active_only': active_only,
-            'allowed_transition': allowed_transition,
-            }
+        'obj_uid': instance.UID(),
+        'action_id': action_id,
+        'active_only': active_only,
+        'allowed_transition': allowed_transition,
+    }
     logger.info('Queue Task: path=%s' % path)
     task_queue.add(path, method='POST', params=params)
     message = instance.translate("{} {} added to the queue".format(
-                action_id, unicode(instance.Title(), errors="ignore")))
+        action_id, unicode(instance.Title(), errors="ignore")))
 
     return True, message
 
