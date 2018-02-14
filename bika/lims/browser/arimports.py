@@ -84,7 +84,7 @@ class ARImportsView(BikaListingView):
              'title': _('All'),
              'contentFilter': {'review_state': ['invalid', 'valid',
                                                 'imported', 'initial']},
-             'transitions': [{'id': 'cancel'},],
+             'transitions': [{'id': 'cancel'}],
              'custom_actions': [],
              'columns': ['Title',
                          'Creator',
@@ -420,14 +420,13 @@ Bika LIMS
         if len(error_list):
             error_msg = 'Errors:\n' + '\n'.join(error_list)
 
-        mail_text = mail_template.format(
-                        name=name,
-                        ars_msg='\n'.join(ar_list),
-                        error_msg=error_msg)
+        mail_text = mail_template.format(name=name,
+                                         ars_msg='\n'.join(ar_list),
+                                         error_msg=error_msg)
         try:
-            mail_host.send(
-                        mail_text, to_email, from_email,
-                        subject=subject, charset="utf-8", immediate=False)
+            mail_host.send(mail_text, to_email, from_email,
+                           subject=subject, charset="utf-8",
+                           immediate=False)
         except smtplib.SMTPRecipientsRefused:
             raise smtplib.SMTPRecipientsRefused(
                         'Recipient address rejected by server')
