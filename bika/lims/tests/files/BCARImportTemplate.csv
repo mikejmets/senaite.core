@@ -1,0 +1,11 @@
+Header,      File name,  Client name,  Client ID, Contact,     CC Names - Report, CC Emails - Report, No of Samples,,,
+Header Data,testingimport.csv,pravintheclient,PKM,Pravin K Mishra,Kimberly R Maxwell,kmaxwell@aceanalytical.com,5,,,
+Batch Header, id,       title,,,,,,,,
+Batch Data,123,test-batch-123,,,,                  ,,,,
+Samples,    ClientSampleID,DateSampled,Sampler,SampleType,Strain,CultivationBatch,Lot,ClientLicenceID,ClientReference,AnalysisProfile
+1,12345678901234567890,2017/10/27 12:00,Oscar Hunt,Flower,Super Tangie,BC123,1,Cultivator,Testing Bulk AR 1,Flower
+2,12345678901234567890,2017/10/27 12:01,Oscar Hunt,Topical ,Super Tangie,BC124,1,Producer,Testing Bulk AR 2,Topical 
+3,12345678901234567890,2017/10/27 12:02,Oscar Hunt,Edible ,Super Tangie,BC125,1,Producer,Testing Bulk AR 3,Topical 
+4,12345678901234567890,2017/10/27 12:03,Oscar Hunt,Nonsolvent ,Super Tangie,BC126,1,Producer,Testing Bulk AR 4,Nonsolvent 
+5,12345678901234567890,2017/10/27 12:04,Oscar Hunt,Wet ,Super Tangie,BC127,1,Cultivator,Testing Bulk AR 5,Wet
+end,,,,,,,,,,

@@ -116,4 +116,14 @@
       permission="zope2.View"
       />
 
+  <!-- AR Import Cancel and Import buttons -->
+    <browser:viewlet
+        for="bika.lims.interfaces.IARImport"
+        name="import_button_viewlet"
+        manager="plone.app.layout.viewlets.interfaces.IBelowContent"
+        template="templates/import_button_viewlet.pt"
+        class="bika.lims.browser.viewlets.import_button_viewlet.ImportButtonViewlet"
+        permission="zope2.View"
+        layer="bika.lims.interfaces.IBikaLIMS"
+      />
 </configure>

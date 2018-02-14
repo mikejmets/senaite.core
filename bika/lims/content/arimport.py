@@ -1027,7 +1027,6 @@ def arimport_create_analysis_requests(self, gridrows, client_uid):
         row = therow.copy()
         row_cnt += 1
         # Create Sample
-        import pdb; pdb.set_trace()
         sample = _createObjectByType('Sample', client, tmpID())
         sample.unmarkCreationFlag()
         # First convert all row values into something the field can take
