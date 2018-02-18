@@ -18,10 +18,13 @@ from Products.CMFCore.utils import getToolByName
 from Products.PythonScripts.standard import html_quote
 
 from bika.lims import bikaMessageFactory as _
+from bika.lims.utils import isnumber
+from bika.lims import logger
+from bika.lims import api
+from bika.lims.utils import t
 from bika.lims.browser import BrowserView
 from bika.lims.interfaces import IAnalysis
 from bika.lims.interfaces import IFieldIcons
-from bika.lims.utils import t, isnumber
 from bika.lims.utils.analysis import format_numeric_result
 
 
@@ -72,203 +75,246 @@ class ajaxCalculateAnalysisEntry(BrowserView):
         self.context = context
         self.request = request
 
-    def calculate(self, uid=None):
-        analysis = self.analyses[uid]
-        form_result = self.current_results[uid]['result']
-        calculation = analysis.getCalculation()
-        if analysis.portal_type == 'ReferenceAnalysis':
-            deps = {}
+    def extend_alerts(self, analysis_uid, alerts):
+        """
+        create or extend the alerts for the given analysis
+        """
+        if isinstance(alerts, basestring):
+            alerts = list(alerts)
+
+        logger.error('ajaxGetMethodCalculation: add alerts {}'.format(alerts))
+        if analysis_uid in self.alerts:
+            self.alerts[analysis_uid].extend(alert)
         else:
-            deps = {}
-            for dep in analysis.getDependencies():
-                deps[dep.UID()] = dep
+            self.alerts[analysis_uid] = alerts
+
+    def combine_all_results(self):
+        """
+        Merge new results with the form results so calculations
+        with calculations are processed
+        """
+        results = self.current_results
+        for result in self.results:
+            results[result['uid']]['result'] = result['result']
+            results[result['uid']]['keyword'] = result['keyword']
+        return results
+
+    def get_analysis_value_by_keyword(self, keyword, results):
+        """
+        return the analysis dict for the given keyword
+        """
+        for key in results.keys():
+            if not results[key].get('keyword', False):
+                logger.error(
+                    'get_analysis_value_by_keyword: no keyword found {}'.format(
+                        str(results[key])))
+                continue
+
+            if results[key]['keyword'] == keyword:
+                return (key, results[key])
+
+    def get_interim_value_by_keyword(self, keyword, results):
+        """
+        return the interim dict for the given keyword
+        """
+        for key in results.keys():
+            if len(results[key]) == 0:
+                continue
+            for interim in results[key]:
+                if interim['keyword'] == keyword:
+                    return interim['value']
+
+    def process_calculation(self, analysis, deps):
+        """We need first to create the map of available parameters
+           acording to the interims, analyses and wildcards:
+
+         params = {
+                <as-1-keyword>              : <analysis_result>,
+                <as-1-keyword>.<wildcard-1> : <wildcard_1_value>,
+                <as-1-keyword>.<wildcard-2> : <wildcard_2_value>,
+                <interim-1>                 : <interim_result>,
+                ...
+                }
+        """
+
         path = '++resource++bika.lims.images'
         mapping = {}
+        analysis_uid = analysis.UID()
+        calculation = analysis.getCalculation()
 
-        # values to be returned to form for this UID
-        Result = {'uid': uid, 'result': form_result}
-        try:
-            Result['result'] = float(form_result)
-        except:
-            if form_result == "0/0":
-                Result['result'] = ""
+        logger.info(
+            'ajaxGetMethodCalculation: process_calculation for {}'.format(
+                calculation.Title()))
 
-        if calculation:
-            """We need first to create the map of available parameters
-               acording to the interims, analyses and wildcards:
+        # Get dependent analyses results and wildcard values to the
+        # mapping. If dependent analysis without result found,
+        # break and abort calculation
+        unsatisfied = False
+        for (dependency_uid, dependency) in deps:
+            if dependency_uid in self.ignore_uids:
+                unsatisfied = True
+                break
 
-             params = {
-                    <as-1-keyword>              : <analysis_result>,
-                    <as-1-keyword>.<wildcard-1> : <wildcard_1_value>,
-                    <as-1-keyword>.<wildcard-2> : <wildcard_2_value>,
-                    <interim-1>                 : <interim_result>,
-                    ...
-                    }
-            """
+            # LIMS-1769. Allow to use LDL and UDL in calculations.
+            # https://jira.bikalabs.com/browse/LIMS-1769
+            analysisvalues = {}
+            if dependency_uid in self.current_results:
+                analysisvalues = self.current_results[dependency_uid]
+            else:
+                # Retrieve the result and DLs from the analysis
+                analysisvalues = {
+                    'keyword': dependency.get('keyword'),
+                    'result': dependency.get('results'),
+                    'ldl': dependency.get('ldl'),
+                    'udl': dependency.get('udl'),
+                    'belowldl': dependency.get('belowldl'),
+                    'aboveudl': dependency.get('aboveudl'),
+                }
+            if analysisvalues['result'] == '':
+                unsatisfied = True
+                break
+            key = analysisvalues.get('keyword', dependency.get('keyword'))
 
-            # Get dependent analyses results and wildcard values to the
-            # mapping. If dependent analysis without result found,
-            # break and abort calculation
-            unsatisfied = False
-            for dependency_uid, dependency in deps.items():
-                if dependency_uid in self.ignore_uids:
-                    unsatisfied = True
-                    break
-
-                # LIMS-1769. Allow to use LDL and UDL in calculations.
-                # https://jira.bikalabs.com/browse/LIMS-1769
-                analysisvalues = {}
-                if dependency_uid in self.current_results:
-                    analysisvalues = self.current_results[dependency_uid]
-                else:
-                    # Retrieve the result and DLs from the analysis
-                    analysisvalues = {
-                        'keyword': dependency.getKeyword(),
-                        'result': dependency.getResult(),
-                        'ldl': dependency.getLowerDetectionLimit(),
-                        'udl': dependency.getUpperDetectionLimit(),
-                        'belowldl': dependency.isBelowLowerDetectionLimit(),
-                        'aboveudl': dependency.isAboveUpperDetectionLimit(),
-                    }
-                if analysisvalues['result'] == '':
-                    unsatisfied = True
-                    break
-                key = analysisvalues.get('keyword', dependency.getKeyword())
-
-                # Analysis result
-                # All result mappings must be float, or they are ignored.
-                try:
-                    mapping[key] = float(analysisvalues.get('result'))
-                    mapping['%s.%s' % (key, 'RESULT')] = float(analysisvalues.get('result'))
-                    mapping['%s.%s' % (key, 'LDL')] = float(analysisvalues.get('ldl'))
-                    mapping['%s.%s' % (key, 'UDL')] = float(analysisvalues.get('udl'))
-                    mapping['%s.%s' % (key, 'BELOWLDL')] = int(analysisvalues.get('belowldl'))
-                    mapping['%s.%s' % (key, 'ABOVEUDL')] = int(analysisvalues.get('aboveudl'))
-                except:
-                    # If not floatable, then abort!
-                    unsatisfied = True
-                    break
-
-            if unsatisfied:
-                # unsatisfied means that one or more result on which we depend
-                # is blank or unavailable, so we set blank result and abort.
-                self.results.append({'uid': uid,
-                                     'result': '',
-                                     'formatted_result': ''})
-                return None
-
-            # Add all interims to mapping
-            for i_uid, i_data in self.item_data.items():
-                for i in i_data:
-                    # if this interim belongs to current analysis and is blank,
-                    # return an empty result for this analysis.
-                    if i_uid == uid and i['value'] == '':
-                        self.results.append({'uid': uid,
-                                             'result': '',
-                                             'formatted_result': ''})
-                        return None
-                    # All interims must be float, or they are ignored.
-                    try:
-                        i['value'] = float(i['value'])
-                    except:
-                        pass
-
-                    # all interims are ServiceKeyword.InterimKeyword
-                    if i_uid in deps:
-                        key = "%s.%s" % (deps[i_uid].getKeyword(),
-                                         i['keyword'])
-                        mapping[key] = i['value']
-                    # this analysis' interims get extra reference
-                    # without service keyword prefix
-                    if uid == i_uid:
-                        mapping[i['keyword']] = i['value']
-
-            # Grab values for hidden InterimFields for only for current calculation
-            # we can't allow non-floats through here till we change the eval's
-            # interpolation
-            hidden_fields = []
-            c_fields = calculation.getInterimFields()
-            s_fields = analysis.getInterimFields()
-            for field in c_fields:
-                if field.get('hidden', False):
-                    hidden_fields.append(field['keyword'])
-                    try:
-                        mapping[field['keyword']] = float(field['value'])
-                    except ValueError:
-                        pass
-            # also grab stickier defaults from AnalysisService
-            for field in s_fields:
-                if field['keyword'] in hidden_fields:
-                    try:
-                        mapping[field['keyword']] = float(field['value'])
-                    except ValueError:
-                        pass
-
-            # convert formula to a valid python string, ready for interpolation
-            formula = calculation.getMinifiedFormula()
-            formula = formula.replace('[', '%(').replace(']', ')f')
+            # Analysis result
+            # All result mappings must be float, or they are ignored.
             try:
-                formula = eval("'%s'%%mapping" % formula,
-                               {"__builtins__": None,
-                                'math': math,
-                                'context': self.context},
-                               {'mapping': mapping})
-                # calculate
-                result = eval(formula, calculation._getGlobals())
-                Result['result'] = result
-                self.current_results[uid]['result'] = result
-            except TypeError as e:
-                # non-numeric arguments in interim mapping?
-                alert = {'field': 'Result',
-                         'icon': path + '/exclamation.png',
-                         'msg': "{0}: {1} ({2}) ".format(
-                             t(_("Type Error")),
-                             html_quote(str(e.args[0])),
-                             formula)}
-                if uid in self.alerts:
-                    self.alerts[uid].append(alert)
-                else:
-                    self.alerts[uid] = [alert, ]
-            except ZeroDivisionError as e:
-                Result['result'] = '0/0'
-                Result['formatted_result'] = '0/0'
-                self.current_results[uid]['result'] = '0/0'
-                self.results.append(Result)
-                alert = {'field': 'Result',
-                         'icon': path + '/exclamation.png',
-                         'msg': "{0}: {1} ({2}) ".format(
-                             t(_("Division by zero")),
-                             html_quote(str(e.args[0])),
-                             formula)}
-                if uid in self.alerts:
-                    self.alerts[uid].append(alert)
-                else:
-                    self.alerts[uid] = [alert, ]
-                return None
-            except KeyError as e:
-                alert = {'field': 'Result',
-                         'icon': path + '/exclamation.png',
-                         'msg': "{0}: {1} ({2}) ".format(
-                             t(_("Key Error")),
-                             html_quote(str(e.args[0])),
-                             formula)}
-                if uid in self.alerts:
-                    self.alerts[uid].append(alert)
-                else:
-                    self.alerts[uid] = [alert, ]
+                mapping[key] = float(analysisvalues.get('result'))
+                mapping['%s.%s' % (key, 'RESULT')] = float(
+                    analysisvalues.get('result'))
+                mapping['%s.%s' % (key, 'LDL')] = float(
+                    analysisvalues.get('ldl'))
+                mapping['%s.%s' % (key, 'UDL')] = float(
+                    analysisvalues.get('udl'))
+                mapping['%s.%s' % (key, 'BELOWLDL')] = int(
+                    analysisvalues.get('belowldl'))
+                mapping['%s.%s' % (key, 'ABOVEUDL')] = int(
+                    analysisvalues.get('aboveudl'))
+            except:
+                # If not floatable, then abort!
+                unsatisfied = True
+                break
+
+        if unsatisfied:
+            # unsatisfied means that one or more result on which we depend
+            # is blank or unavailable. this should never happen
+            raise api.BikaLIMSError(
+                'ajaxGetMethodCalculation: no analysis should be unsatisfied')
+
+        # Add all interims to mapping
+        for i_uid, i_data in self.item_data.items():
+            for i in i_data:
+                # if this interim belongs to current analysis and is blank,
+                # return an empty result for this analysis.
+                if i_uid == analysis_uid and i['value'] == '':
+                    self.results.append({
+                        'uid': analysis_uid,
+                        'result': '',
+                        'keyword': i['keyword'],
+                        'formatted_result': ''})
+                    return False
+                # All interims must be float, or they are ignored.
+                try:
+                    i['value'] = float(i['value'])
+                except:
+                    pass
+
+                # all interims are ServiceKeyword.InterimKeyword
+                if i_uid in deps:
+                    key = "%s.%s" % (deps[i_uid].getKeyword(),
+                                     i['keyword'])
+                    mapping[key] = i['value']
+                # this analysis' interims get extra reference
+                # without service keyword prefix
+                if analysis_uid == i_uid:
+                    mapping[i['keyword']] = i['value']
+
+        # Grab values for hidden InterimFields for only for current
+        # calculation. We can't allow non-floats through here till
+        # we change the eval's interpolation
+        hidden_fields = []
+        c_fields = calculation.getInterimFields()
+        for field in c_fields:
+            if field.get('hidden', False):
+                hidden_fields.append(field['keyword'])
+                try:
+                    mapping[field['keyword']] = float(field['value'])
+                except ValueError:
+                    pass
+
+        # also grab stickier defaults from AnalysisService
+        s_fields = analysis.getInterimFields()
+        for field in s_fields:
+            if field['keyword'] in hidden_fields:
+                try:
+                    mapping[field['keyword']] = float(field['value'])
+                except ValueError:
+                    pass
+
+        # convert formula to a valid python string, ready for interpolation
+        formula = calculation.getMinifiedFormula()
+        formula = formula.replace('[', '%(').replace(']', ')f')
+        try:
+            formula = eval("'%s'%%mapping" % formula,
+                           {"__builtins__": None,
+                            'math': math,
+                            'context': self.context},
+                           {'mapping': mapping})
+            # calculate
+            result = eval(formula, calculation._getGlobals())
+            self.current_results[analysis_uid]['result'] = result
+
+        except TypeError as e:
+            # non-numeric arguments in interim mapping?
+            alert = {'field': 'Result',
+                     'icon': path + '/exclamation.png',
+                     'msg': "{0}: {1} ({2}) ".format(
+                         t(_("Type Error")),
+                         html_quote(str(e.args[0])),
+                         formula)}
+            self.extend_alerts(analysis_uid, alert)
+        except ZeroDivisionError as e:
+            Result['result'] = '0/0'
+            Result['formatted_result'] = '0/0'
+            self.results.append(Result)
+            self.current_results[analysis_uid]['result'] = '0/0'
+            alert = {'field': 'Result',
+                     'icon': path + '/exclamation.png',
+                     'msg': "{0}: {1} ({2}) ".format(
+                         t(_("Division by zero")),
+                         html_quote(str(e.args[0])),
+                         formula)}
+            self.extend_alerts(analysis_uid, alert)
+            return False
+        except KeyError as e:
+            alert = {'field': 'Result',
+                     'icon': path + '/exclamation.png',
+                     'msg': "{0}: {1} ({2}) ".format(
+                         t(_("Key Error")),
+                         html_quote(str(e.args[0])),
+                         formula)}
+            self.extend_alerts(analysis_uid, alert)
+
+        Result = {'uid': analysis_uid, 'result': result}
+        self.process_analysis_result(analysis, Result)
+        return True
+
+    def process_analysis_result(self, analysis, Result):
+        analysis_uid = analysis.UID()
 
         # format result
         try:
-            Result['formatted_result'] = format_numeric_result(analysis,
-                                                               Result['result'])
+            Result['formatted_result'] = format_numeric_result(
+                analysis, Result['result'])
         except ValueError:
             # non-float
             Result['formatted_result'] = Result['result']
+
         # calculate Dry Matter result
         # if parent is not an AR, it's never going to be calculable
         dm = hasattr(analysis.aq_parent, 'getReportDryMatter') and \
             analysis.aq_parent.getReportDryMatter() and \
             analysis.getReportDryMatter()
+
         if dm:
             dry_service = self.context.bika_setup.getDryMatterService()
             # get the UID of the DryMatter Analysis from our parent AR
@@ -294,19 +340,15 @@ class ajaxCalculateAnalysisEntry(BrowserView):
         Result['dry_result'] = dm and dry_result and \
             '%.2f' % ((Result['result'] / dry_result) * 100) or ''
 
+        Result['keyword'] = analysis.getKeyword()
         self.results.append(Result)
-
-        # if App.config.getConfiguration().debug_mode:
-        #     logger.info("calc.py: %s->%s %s" % (analysis.aq_parent.id,
-        #                                         analysis.id,
-        #                                         Result))
 
         # LIMS-1808 Uncertainty calculation on DL
         # https://jira.bikalabs.com/browse/LIMS-1808
         flres = Result.get('result', None)
         if flres and isnumber(flres):
             flres = float(flres)
-            anvals = self.current_results[uid]
+            anvals = self.current_results[analysis_uid]
             isldl = anvals.get('isldl', False)
             isudl = anvals.get('isudl', False)
             ldl = anvals.get('ldl', 0)
@@ -315,34 +357,95 @@ class ajaxCalculateAnalysisEntry(BrowserView):
             udl = float(udl) if isnumber(udl) else 10000000
             belowldl = (isldl or flres < ldl)
             aboveudl = (isudl or flres > udl)
-            unc = '' if (belowldl or aboveudl) else analysis.getUncertainty(Result.get('result'))
+            unc = '' if (belowldl or aboveudl) \
+                else analysis.getUncertainty(Result.get('result'))
             if not (belowldl or aboveudl):
-                self.uncertainties.append({'uid': uid, 'uncertainty': unc})
-
-        # maybe a service who depends on us must be recalculated.
-        if analysis.portal_type == 'ReferenceAnalysis':
-            dependents = []
-        else:
-            dependents = analysis.getDependents()
-        if dependents:
-            for dependent in dependents:
-                dependent_uid = dependent.UID()
-                # ignore analyses that no longer exist.
-                if dependent_uid in self.ignore_uids or \
-                   dependent_uid not in self.analyses:
-                    continue
-                self.calculate(dependent_uid)
+                analysis.getUncertainty(Result.get('result'))
+                self.uncertainties.append({'uid': analysis_uid, 'uncertainty': unc})
 
         # These self.alerts are just for the json return.
         # we're placing the entire form's results in kwargs.
         adapters = getAdapters((analysis, ), IFieldIcons)
         for name, adapter in adapters:
-            alerts = adapter(result=Result['result'], form_results=self.current_results)
+            alerts = adapter(result=Result['result'],
+                             form_results=self.current_results)
             if alerts:
-                if analysis.UID() in self.alerts:
-                    self.alerts[analysis.UID()].extend(alerts[analysis.UID()])
-                else:
-                    self.alerts[analysis.UID()] = alerts[analysis.UID()]
+                self.extend_alerts(analysis_uid, alerts)
+
+    def calculation_contains_a_calculation(self, calc):
+        """
+        Return true if a calculation contains a calculation
+        """
+        for svc in calc.getDependentServices():
+            if svc.getCalculation():
+                return True
+        return False
+
+    def calculate(self, analysis_uid=None):
+        analysis = self.analyses[analysis_uid]
+
+        # process form_result if not a calculation
+        if not analysis.getCalculation():
+            form_result = self.current_results[analysis_uid]['result']
+            Result = {'uid': analysis_uid, 'result': form_result}
+            self.process_analysis_result(analysis, Result)
+
+        # Get all analyses that are calculations
+        calc_ans = [
+            self.analyses[uid] for uid in
+            filter(
+                lambda x: self.analyses[x].getCalculation(),
+                self.analyses)]
+
+        # Ensure calculation that contain calculation are processed last
+        calc_ans.sort(
+            key=lambda x: self.calculation_contains_a_calculation(
+                x.getCalculation()),
+            reverse=False)
+
+        # process calculations that have all required results
+        for calc_an in calc_ans:
+            logger.info(
+                'ajaxGetMethodCalculation: updatable {}?'.format(
+                    calc_an.Title()))
+
+            # get updated result set
+            results = self.combine_all_results()
+
+            dep_svcs = calc_an.getCalculation().getDependentServices()
+            if len(dep_svcs) > 0:
+                # gather dependent analysis for performance
+                deps = []
+
+                # break if any dep has no results
+                missing_results = False
+                for svc in dep_svcs:
+                    (an_uid, result) = \
+                        self.get_analysis_value_by_keyword(svc.getKeyword(), results)
+                    deps.append((an_uid, result))
+                    if len(str(result['result'])) == 0:
+                        missing_results = True
+                        break
+                if not missing_results:
+                    self.process_calculation(calc_an, deps)
+
+            interims = calc_an.getCalculation().getInterimFields()
+            if len(interims) > 0:
+                # gather dependent analysis for performance
+                deps = []
+
+                # break if any dep has no results
+                missing_results = False
+                for interim in interims:
+                    result = self.get_interim_value_by_keyword(
+                        interim['keyword'], self.item_data)
+                    if result == 0:
+                        missing_results = True
+                        break
+                if not missing_results:
+                    self.process_calculation(calc_an, deps)
+
+        return True
 
     def __call__(self):
         self.rc = getToolByName(self.context, REFERENCE_CATALOG)
