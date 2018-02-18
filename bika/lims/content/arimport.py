@@ -183,7 +183,8 @@ SampleData = DataGridField(
              'ContainerType',  # not a schema field!
              'ReportDryMatter',
              'Analyses',  # not a schema field!
-             'Profiles'  # not a schema field!
+             'Profiles',  # not a schema field!
+             'Specification',  # not a schema field!
              ),
     widget=DataGridWidget(
         label=_('Samples'),
@@ -202,6 +203,8 @@ SampleData = DataGridField(
             'ReportDryMatter': CheckboxColumn('Dry'),
             'Analyses': LinesColumn('Analyses'),
             'Profiles': LinesColumn('Profiles'),
+            'Specification': SelectColumn(
+                'Specification', vocabulary='Vocabulary_Specification'),
         }
     )
 )
@@ -557,7 +560,7 @@ class ARImport(BaseFolder):
 
             # match against sample schema
             for k, v in row.items():
-                if k in ['Analyses', 'Profiles']:
+                if k in ['Analyses', 'Profiles', 'Specification']:
                     continue
                 if k in sample_schema:
                     del (row[k])
@@ -795,7 +798,7 @@ class ARImport(BaseFolder):
 
             # validate against sample and ar schemas
             for k, v in gridrow.items():
-                if k in ['Analysis', 'Profiles']:
+                if k in ['Analysis', 'Profiles', 'Specification']:
                     break
                 if k in sample_schema:
                     try:
@@ -950,6 +953,15 @@ class ARImport(BaseFolder):
         if IClient.providedBy(self.aq_parent):
             folders.append(self.aq_parent)
         return vocabulary(allow_blank=True, portal_type='SampleType')
+
+    def Vocabulary_Specification(self):
+        vocabulary = CatalogVocabulary(self)
+        vocabulary.catalog = 'bika_setup_catalog'
+        # folders = [self.bika_setup.bika_analysisspecs]
+        # if IClient.providedBy(self.aq_parent):
+        #     folders.append(self.aq_parent)
+        return vocabulary(allow_blank=False, portal_type='AnalysisSpec')
+
 
     def Vocabulary_ContainerType(self):
         vocabulary = CatalogVocabulary(self)
