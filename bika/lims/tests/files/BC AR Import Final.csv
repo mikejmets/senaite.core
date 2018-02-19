@@ -1,0 +1,108 @@
+Header,Client Name,Client ID,Contact,,,,,,,,,,,,,
+Header Data,AAA Acres Cultivation,ACR,Amy Castaldo,,,,,,,,,,,,,
+Batch Headers,Batch title,Batch Description,Client Batch ID,,,,,,,,,,,,,
+Batch Header,title,description,ClientBatchID,,,,,,,,,,,,,
+Batch Data,AR Import 02,This is a description,CBID 1,,,,,,,,,,,,,
+Samples Headers,Client Sample ID,Date Sampled,Time Sampled,Sampler,Sample Type,ClientLicenceID,Sample Point,Container Type,Report as Dry Matter,Strain,Cultivation Batch,Lot,Client Ref,Priority,Analysis Specification,Analysis Profile
+Samples,ClientSampleID,DateSampled,TimeSampled,Sampler,SampleType,ClientLicenceID,SamplePoint,ContainerType,ReportDryMatter,Strain,CultivationBatch,Lot,ClientReference,Priority,Specification,AnalysisProfile
+1,ARI CSID 01,10/27/2017,8:20,Lunga Baliwe,Flower,Cultivator,Client Vault,Unsecure ,Yes,24K,CB 0001,Lot 687,Cref 000,Medium,Edible State Limits (Lab),Flower and Trim
+2,ARI CSID 02,10/27/2017,8:30,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+3,ARI CSID 03,10/27/2017,8:40,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+4,ARI CSID 04,10/27/2017,8:50,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+5,ARI CSID 05,10/27/2017,9:00,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+6,ARI CSID 06,10/27/2017,9:10,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+7,ARI CSID 07,10/27/2017,9:20,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+8,ARI CSID 08,10/27/2017,9:30,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+9,ARI CSID 09,10/27/2017,9:40,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+10,ARI CSID 10,10/27/2017,9:50,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+11,ARI CSID 11,10/27/2017,10:00,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+12,ARI CSID 12,10/27/2017,10:10,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+13,ARI CSID 13,10/27/2017,10:20,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+14,ARI CSID 14,10/27/2017,10:30,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+15,ARI CSID 15,10/27/2017,10:40,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+16,ARI CSID 16,10/27/2017,10:50,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+17,ARI CSID 17,11/12/2017,9:40,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+18,ARI CSID 18,11/13/2017,9:50,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+19,ARI CSID 19,11/14/2017,10:00,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+20,ARI CSID 20,11/15/2017,10:10,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+21,ARI CSID 21,11/16/2017,10:20,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+22,ARI CSID 22,11/17/2017,10:30,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+23,ARI CSID 23,11/18/2017,10:40,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+24,ARI CSID 24,11/19/2017,10:50,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+25,ARI CSID 25,11/20/2017,11:00,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+26,ARI CSID 26,11/21/2017,11:10,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+27,ARI CSID 27,11/22/2017,11:20,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+28,ARI CSID 28,11/23/2017,11:30,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+29,ARI CSID 29,11/24/2017,11:40,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+30,ARI CSID 30,11/25/2017,11:50,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+31,ARI CSID 31,11/26/2017,12:00,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+32,ARI CSID 32,11/27/2017,12:10,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+33,ARI CSID 33,11/28/2017,12:20,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+34,ARI CSID 34,11/29/2017,12:30,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+35,ARI CSID 35,11/30/2017,12:40,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+36,ARI CSID 36,12/1/2017,12:50,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+37,ARI CSID 37,12/2/2017,13:00,Lunga Baliwe,Flower,Cultivator,Client Vault,Ziplock Bag,Yes,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+38,ARI CSID 38,12/3/2017,13:10,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+39,ARI CSID 39,12/4/2017,13:20,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+40,ARI CSID 40,12/5/2017,13:30,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+41,ARI CSID 41,12/6/2017,13:40,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+42,ARI CSID 42,12/7/2017,13:50,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+43,ARI CSID 43,12/8/2017,14:00,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+44,ARI CSID 44,12/9/2017,14:10,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+45,ARI CSID 45,12/10/2017,14:20,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+46,ARI CSID 46,12/11/2017,14:30,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+47,ARI CSID 47,12/12/2017,14:40,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+48,ARI CSID 48,12/13/2017,14:50,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+49,ARI CSID 49,12/14/2017,15:00,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+50,ARI CSID 50,12/15/2017,15:10,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+51,ARI CSID 51,12/16/2017,15:20,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+52,ARI CSID 52,12/17/2017,15:30,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+53,ARI CSID 53,12/18/2017,15:40,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+54,ARI CSID 54,12/19/2017,15:50,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+55,ARI CSID 55,12/20/2017,16:00,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+56,ARI CSID 56,12/21/2017,16:10,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+57,ARI CSID 57,12/22/2017,16:20,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+58,ARI CSID 58,12/23/2017,16:30,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+59,ARI CSID 59,12/24/2017,16:40,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+60,ARI CSID 60,12/25/2017,16:50,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+61,ARI CSID 61,12/26/2017,17:00,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+62,ARI CSID 62,12/27/2017,17:10,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+63,ARI CSID 63,12/28/2017,17:20,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+64,ARI CSID 64,12/29/2017,17:30,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+65,ARI CSID 65,12/30/2017,17:40,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+66,ARI CSID 66,12/31/2017,17:50,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+67,ARI CSID 67,1/1/2018,18:00,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+68,ARI CSID 68,1/2/2018,18:10,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+69,ARI CSID 69,1/3/2018,18:20,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+70,ARI CSID 70,1/4/2018,18:30,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+71,ARI CSID 71,1/5/2018,18:40,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+72,ARI CSID 72,1/6/2018,18:50,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+73,ARI CSID 73,1/7/2018,19:00,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+74,ARI CSID 74,1/8/2018,19:10,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+75,ARI CSID 75,1/9/2018,19:20,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+76,ARI CSID 76,1/10/2018,19:30,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+77,ARI CSID 77,1/11/2018,19:40,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+78,ARI CSID 78,1/12/2018,19:50,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+79,ARI CSID 79,1/13/2018,20:00,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+80,ARI CSID 80,1/14/2018,20:10,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+81,ARI CSID 81,1/15/2018,20:20,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+82,ARI CSID 82,1/16/2018,20:30,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+83,ARI CSID 83,1/17/2018,20:40,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+84,ARI CSID 84,1/18/2018,20:50,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+85,ARI CSID 85,1/19/2018,21:00,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+86,ARI CSID 86,1/20/2018,21:10,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+87,ARI CSID 87,1/21/2018,21:20,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+88,ARI CSID 88,1/22/2018,21:30,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+89,ARI CSID 89,1/23/2018,21:40,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+90,ARI CSID 90,1/24/2018,21:50,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+91,ARI CSID 91,1/25/2018,22:00,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+92,ARI CSID 92,1/26/2018,18:40,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+93,ARI CSID 93,1/27/2018,18:50,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+94,ARI CSID 94,1/28/2018,19:00,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+95,ARI CSID 95,1/29/2018,19:10,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+96,ARI CSID 96,1/30/2018,19:20,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+97,ARI CSID 97,1/31/2018,19:30,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+98,ARI CSID 98,2/1/2018,19:40,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+99,ARI CSID 99,2/2/2018,19:50,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+100,ARI CSID 100,2/3/2018,20:00,Lunga Baliwe,Flower,Cultivator,,,,24K,CB 0001,Lot 687,Cref 000,Medium,,Flower and Trim
+end,,,,,,,,,,,,,,,,
