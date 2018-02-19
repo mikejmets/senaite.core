@@ -23,13 +23,33 @@ class window.CalculationUtils
     console.debug "CalculationUtils::bind_eventhandler"
 
     # result gets focus
-    $('.ajax_calculate').on 'focus', @on_result_focus
+    $('body').on 'focus', '.ajax_calculate', @debounce @on_result_focus
 
     # result looses focus but value hasn't changed
-    $('.ajax_calculate').on 'blur', @on_result_blur
+    $('body').on 'blur', '.ajax_calculate', @debounce @on_result_blur
 
     # result value has changes
-    $('.ajax_calculate').on 'change', @on_result_change
+    $('body').on 'change', '.ajax_calculate', @debounce @on_result_change
+
+    return
+
+  debounce: (func, threshold, execAsap) =>
+    ###
+     * Debounce a function call
+     * See: https://coffeescript-cookbook.github.io/chapters/functions/debounce
+    ###
+    timeout = null
+
+    (args...) ->
+      obj = this
+      delayed = ->
+        func.apply(obj, args) unless execAsap
+        timeout = null
+      if timeout
+        clearTimeout(timeout)
+      else if (execAsap)
+        func.apply(obj, args)
+      timeout = setTimeout delayed, threshold || 100
 
     return
 

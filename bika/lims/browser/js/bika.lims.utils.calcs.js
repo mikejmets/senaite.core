@@ -4,7 +4,8 @@
  */
 
 (function() {
-  var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+  var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
+    slice = [].slice;
 
   window.CalculationUtils = (function() {
     function CalculationUtils() {
@@ -16,6 +17,7 @@
       this.on_result_change = bind(this.on_result_change, this);
       this.on_result_blur = bind(this.on_result_blur, this);
       this.on_result_focus = bind(this.on_result_focus, this);
+      this.debounce = bind(this.debounce, this);
       this.bind_eventhandler = bind(this.bind_eventhandler, this);
       this.load = bind(this.load, this);
     }
@@ -32,9 +34,36 @@
        * Binds callbacks on elements
        */
       console.debug("CalculationUtils::bind_eventhandler");
-      $('.ajax_calculate').on('focus', this.on_result_focus);
-      $('.ajax_calculate').on('blur', this.on_result_blur);
-      $('.ajax_calculate').on('change', this.on_result_change);
+      $('body').on('focus', '.ajax_calculate', this.debounce(this.on_result_focus));
+      $('body').on('blur', '.ajax_calculate', this.debounce(this.on_result_blur));
+      $('body').on('change', '.ajax_calculate', this.debounce(this.on_result_change));
+    };
+
+    CalculationUtils.prototype.debounce = function(func, threshold, execAsap) {
+
+      /*
+       * Debounce a function call
+       * See: https://coffeescript-cookbook.github.io/chapters/functions/debounce
+       */
+      var timeout;
+      timeout = null;
+      (function() {
+        var args, delayed, obj;
+        args = 1 <= arguments.length ? slice.call(arguments, 0) : [];
+        obj = this;
+        delayed = function() {
+          if (!execAsap) {
+            func.apply(obj, args);
+          }
+          return timeout = null;
+        };
+        if (timeout) {
+          clearTimeout(timeout);
+        } else if (execAsap) {
+          func.apply(obj, args);
+        }
+        return timeout = setTimeout(delayed, threshold || 100);
+      });
     };
 
     CalculationUtils.prototype.on_result_focus = function(event) {
