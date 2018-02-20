@@ -184,6 +184,7 @@
                                   st_uid string:${item/st_uid|nothing};
                                   objectId string:${item/id};
                                   field python:field if field else column;
+                                  interim string:true;
                                   value python:item[column]['value'];"/>
                 <tal:comment replace="nothing"><!-- view --></tal:comment>
                 <span tal:condition="python:not allow_edit"
@@ -234,6 +235,7 @@
                                        st_uid string:${item/st_uid|nothing};
                                        objectId string:${item/id};
                                        field python:field if field else column;
+                                       field_type string:result;
                                        name python:column == view.bika_listing.select_checkbox_name and '%s_column_value.%s:records'%(column, item['uid']) or '%s.%s:records'%(column, item['uid']);
                                        value python:item[column] if item[column] is not None else '';"/>
 
@@ -339,6 +341,7 @@
                                         field python:field if field else column;
                                         name string:${column}.${item/uid}:records;
                                         as_uid string:${item/service_uid|nothing};
+                                        objectId string:${item/id};
                                         uid item/uid;">
                   <option value="" tal:condition="not:required"></option>
                   <tal:options tal:repeat="option python:item['choices'][column]">

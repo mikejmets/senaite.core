@@ -18,13 +18,13 @@ from Products.CMFCore.utils import getToolByName
 from Products.PythonScripts.standard import html_quote
 
 from bika.lims import bikaMessageFactory as _
-from bika.lims.utils import isnumber
 from bika.lims import logger
 from bika.lims import api
-from bika.lims.utils import t
 from bika.lims.browser import BrowserView
 from bika.lims.interfaces import IAnalysis
 from bika.lims.interfaces import IFieldIcons
+from bika.lims.utils import isnumber
+from bika.lims.utils import t
 from bika.lims.utils.analysis import format_numeric_result
 
 
@@ -120,9 +120,8 @@ class ajaxCalculateAnalysisEntry(BrowserView):
         for key in results.keys():
             if len(results[key]) == 0:
                 continue
-            for interim in results[key]:
-                if interim['keyword'] == keyword:
-                    return interim['value']
+            if results[key].get('keyword') == keyword:
+                return interim['value']
 
     def process_calculation(self, analysis, deps):
         """We need first to create the map of available parameters
@@ -357,11 +356,13 @@ class ajaxCalculateAnalysisEntry(BrowserView):
             udl = float(udl) if isnumber(udl) else 10000000
             belowldl = (isldl or flres < ldl)
             aboveudl = (isudl or flres > udl)
+
             unc = '' if (belowldl or aboveudl) \
                 else analysis.getUncertainty(Result.get('result'))
             if not (belowldl or aboveudl):
                 analysis.getUncertainty(Result.get('result'))
-                self.uncertainties.append({'uid': analysis_uid, 'uncertainty': unc})
+                self.uncertainties.append(
+                    {'uid': analysis_uid, 'uncertainty': unc})
 
         # These self.alerts are just for the json return.
         # we're placing the entire form's results in kwargs.
@@ -438,7 +439,7 @@ class ajaxCalculateAnalysisEntry(BrowserView):
                 missing_results = False
                 for interim in interims:
                     result = self.get_interim_value_by_keyword(
-                        interim['keyword'], self.item_data)
+                        interim['keyword'], results)
                     if result == 0:
                         missing_results = True
                         break
