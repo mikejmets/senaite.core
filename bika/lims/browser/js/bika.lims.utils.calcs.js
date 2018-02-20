@@ -34,9 +34,9 @@
        * Binds callbacks on elements
        */
       console.debug("CalculationUtils::bind_eventhandler");
-      $('body').on('focus', '.ajax_calculate', this.debounce(this.on_result_focus));
-      $('body').on('blur', '.ajax_calculate', this.debounce(this.on_result_blur));
-      $('body').on('change', '.ajax_calculate', this.debounce(this.on_result_change));
+      $('form').on('focus', '.ajax_calculate', this.on_result_focus);
+      $('form').on('blur', '.ajax_calculate', this.on_result_blur);
+      $('form').on('change', '.ajax_calculate', this.on_result_change);
     };
 
     CalculationUtils.prototype.debounce = function(func, threshold, execAsap) {
@@ -242,9 +242,9 @@
           aboveudl: andls.above_udl,
           type: this.type
         };
-        console.debug('CalculationUtils: collect_form_results ' + Object.keys(results).length);
         results[uid] = mapping;
       });
+      console.debug('CalculationUtils: collect_form_results ' + Object.keys(results).length);
       return results;
     };
 
