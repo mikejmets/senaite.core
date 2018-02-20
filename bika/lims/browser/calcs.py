@@ -121,9 +121,8 @@ class ajaxCalculateAnalysisEntry(BrowserView):
         for key in results.keys():
             if len(results[key]) == 0:
                 continue
-            for interim in results[key]:
-                if interim['keyword'] == keyword:
-                    return interim['value']
+            if results[key].get('keyword') == keyword:
+                return interim['value']
 
     def process_calculation(self, analysis, deps):
         """We need first to create the map of available parameters
@@ -368,20 +367,8 @@ class ajaxCalculateAnalysisEntry(BrowserView):
                 else analysis.getUncertainty(Result.get('result'))
             if not (belowldl or aboveudl):
                 analysis.getUncertainty(Result.get('result'))
-                self.uncertainties.append({'uid': uid, 'uncertainty': unc})
-        # maybe a service who depends on us must be recalculated.
-        if analysis.portal_type == 'ReferenceAnalysis':
-            dependents = []
-        else:
-            dependents = analysis.getDependents()
-        if dependents:
-            for dependent in dependents:
-                dependent_uid = dependent.UID()
-                # ignore analyses that no longer exist.
-                if dependent_uid in self.ignore_uids or \
-                   dependent_uid not in self.analyses:
-                    continue
-                self.calculate(dependent_uid)
+                self.uncertainties.append(
+                    {'uid': analysis_uid, 'uncertainty': unc})
 
         # These self.alerts are just for the json return.
         # we're placing the entire form's results in kwargs.
@@ -458,7 +445,7 @@ class ajaxCalculateAnalysisEntry(BrowserView):
                 missing_results = False
                 for interim in interims:
                     result = self.get_interim_value_by_keyword(
-                        interim['keyword'], self.item_data)
+                        interim['keyword'], results)
                     if result == 0:
                         missing_results = True
                         break

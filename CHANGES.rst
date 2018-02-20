@@ -8,6 +8,7 @@ Changelog
 **Added**
 
 - #666 Added Unpublished filter in Analysis Requests list
+- Refactored manage_results calculation process
 
 **Changed**
 
@@ -25,6 +26,9 @@ Changelog
 
 **Fixed**
 
+- #653 Points in QC Charts are not displayed in accordance with capture date
+- #662 Viewing Cancelled AR's fails
+- #550 Wrong Listings of Analyses called from Dashboard
 - #666 "Rejected" filter is displayed in AR lists regardless of Setup setting
 - #666 "To be preserved" filter is displayed in AR lists regardless of Setup setting
 - #666 "Scheduled sampling" is displayed in AR lists regardless of Setup setting
