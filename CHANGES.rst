@@ -8,6 +8,7 @@ Changelog
 **Added**
 
 - #666 Added Unpublished filter in Analysis Requests list
+- Refactored manage_results calculation process
 
 **Changed**
 
