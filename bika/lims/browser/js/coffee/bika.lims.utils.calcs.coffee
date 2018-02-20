@@ -23,13 +23,13 @@ class window.CalculationUtils
     console.debug "CalculationUtils::bind_eventhandler"
 
     # result gets focus
-    $('body').on 'focus', '.ajax_calculate', @debounce @on_result_focus
+    $('form').on 'focus', '.ajax_calculate', @on_result_focus
 
     # result looses focus but value hasn't changed
-    $('body').on 'blur', '.ajax_calculate', @debounce @on_result_blur
+    $('form').on 'blur', '.ajax_calculate', @on_result_blur
 
     # result value has changes
-    $('body').on 'change', '.ajax_calculate', @debounce @on_result_change
+    $('form').on 'change', '.ajax_calculate', @on_result_change
 
     return
 
@@ -249,9 +249,9 @@ class window.CalculationUtils
           aboveudl: andls.above_udl
           type: this.type
 
-      console.debug 'CalculationUtils: collect_form_results ' + Object.keys(results).length
       results[uid] = mapping
       return
+    console.debug 'CalculationUtils: collect_form_results ' + Object.keys(results).length
     return results
 
 
