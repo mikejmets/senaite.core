@@ -1228,7 +1228,6 @@ class AsyncView(BrowserView):
 
         ar.setDateSampled(dateSampled)
         ar.setSampler(sampler)
-        import pdb; pdb.set_trace()
         ploneapi.content.transition(ar, 'sample')
         logger.info('async_sample server complete')
 
