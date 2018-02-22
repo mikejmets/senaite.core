@@ -121,8 +121,14 @@ class ajaxCalculateAnalysisEntry(BrowserView):
         for key in results.keys():
             if len(results[key]) == 0:
                 continue
-            if results[key].get('keyword') == keyword:
-                return interim['value']
+            for interim in results[key]:
+                if not interim.get('keyword', False):
+                    continue
+                if interim.get('keyword') == keyword:
+                    return (interim['keyword'], interim['result'])
+        raise api.BikaLIMSError(
+            """get_interim_value_by_keyword: interim keyword {}
+            not found""".format(keyword))
 
     def process_calculation(self, analysis, deps):
         """We need first to create the map of available parameters
@@ -200,55 +206,81 @@ class ajaxCalculateAnalysisEntry(BrowserView):
             raise api.BikaLIMSError(
                 'ajaxGetMethodCalculation: no analysis should be unsatisfied')
 
+        # convert formula to a valid python string, ready for interpolation
+        formula = calculation.getMinifiedFormula()
+        formula = formula.replace('[', '%(').replace(']', ')f')
+        try:
+            formula = eval("'%s'%%mapping" % formula,
+                           {"__builtins__": None,
+                            'math': math,
+                            'context': self.context},
+                           {'mapping': mapping})
+            # calculate
+            result = eval(formula, calculation._getGlobals())
+            self.current_results[analysis_uid]['result'] = result
+
+        except TypeError as e:
+            # non-numeric arguments in interim mapping?
+            alert = {'field': 'Result',
+                     'icon': path + '/exclamation.png',
+                     'msg': "{0}: {1} ({2}) ".format(
+                         t(_("Type Error")),
+                         html_quote(str(e.args[0])),
+                         formula)}
+            self.extend_alerts(analysis_uid, alert)
+        except ZeroDivisionError as e:
+            Result['result'] = '0/0'
+            Result['formatted_result'] = '0/0'
+            self.results.append(Result)
+            self.current_results[analysis_uid]['result'] = '0/0'
+            alert = {'field': 'Result',
+                     'icon': path + '/exclamation.png',
+                     'msg': "{0}: {1} ({2}) ".format(
+                         t(_("Division by zero")),
+                         html_quote(str(e.args[0])),
+                         formula)}
+            self.extend_alerts(analysis_uid, alert)
+            return False
+        except KeyError as e:
+            alert = {'field': 'Result',
+                     'icon': path + '/exclamation.png',
+                     'msg': "{0}: {1} ({2}) ".format(
+                         t(_("Key Error")),
+                         html_quote(str(e.args[0])),
+                         formula)}
+            self.extend_alerts(analysis_uid, alert)
+
+        Result = {'uid': analysis_uid, 'result': result}
+        self.process_analysis_result(analysis, Result)
+        return True
+
+    def process_interims(self, analysis, deps):
+        """First to create the map of available parameters
+           acording to the interims and then use them in the formula
+        """
+
+        path = '++resource++bika.lims.images'
+        mapping = {}
+        analysis_uid = analysis.UID()
+        calculation = analysis.getCalculation()
+
+        logger.info(
+            'ajaxGetMethodCalculation: process_interims for {}'.format(
+                calculation.Title()))
+
         # Add all interims to mapping
-        for i_uid, i_data in self.item_data.items():
-            for i in i_data:
-                # if this interim belongs to current analysis and is blank,
-                # return an empty result for this analysis.
-                if i_uid == analysis_uid and i['value'] == '':
-                    self.results.append({
-                        'uid': analysis_uid,
-                        'result': '',
-                        'keyword': i['keyword'],
-                        'formatted_result': ''})
-                    return False
-                # All interims must be float, or they are ignored.
-                try:
-                    i['value'] = float(i['value'])
-                except:
-                    pass
-
-                # all interims are ServiceKeyword.InterimKeyword
-                if i_uid in deps:
-                    key = "%s.%s" % (deps[i_uid].getKeyword(),
-                                     i['keyword'])
-                    mapping[key] = i['value']
-                # this analysis' interims get extra reference
-                # without service keyword prefix
-                if analysis_uid == i_uid:
-                    mapping[i['keyword']] = i['value']
-
-        # Grab values for hidden InterimFields for only for current
-        # calculation. We can't allow non-floats through here till
-        # we change the eval's interpolation
-        hidden_fields = []
-        c_fields = calculation.getInterimFields()
-        for field in c_fields:
-            if field.get('hidden', False):
-                hidden_fields.append(field['keyword'])
-                try:
-                    mapping[field['keyword']] = float(field['value'])
-                except ValueError:
-                    pass
-
-        # also grab stickier defaults from AnalysisService
-        s_fields = analysis.getInterimFields()
-        for field in s_fields:
-            if field['keyword'] in hidden_fields:
-                try:
-                    mapping[field['keyword']] = float(field['value'])
-                except ValueError:
-                    pass
+        for dep in deps:
+            try:
+                mapping[dep[0]] = float(dep[1])
+            except TypeError as e:
+                alert = {'field': 'Result',
+                         'icon': path + '/exclamation.png',
+                         'msg': "{0}: {1}".format(
+                             t(_("Type Error")),
+                             html_quote(str(e.args[0])),
+                             dep[1])}
+                self.extend_alerts(analysis_uid, alert)
+                return False
 
         # convert formula to a valid python string, ready for interpolation
         formula = calculation.getMinifiedFormula()
@@ -272,6 +304,7 @@ class ajaxCalculateAnalysisEntry(BrowserView):
                          html_quote(str(e.args[0])),
                          formula)}
             self.extend_alerts(analysis_uid, alert)
+            return False
         except ZeroDivisionError as e:
             Result['result'] = '0/0'
             Result['formatted_result'] = '0/0'
@@ -392,10 +425,9 @@ class ajaxCalculateAnalysisEntry(BrowserView):
         analysis = self.analyses[analysis_uid]
 
         # process form_result if not a calculation
-        if not analysis.getCalculation():
-            form_result = self.current_results[analysis_uid]['result']
-            Result = {'uid': analysis_uid, 'result': form_result}
-            self.process_analysis_result(analysis, Result)
+        form_result = self.current_results[analysis_uid]['result']
+        Result = {'uid': analysis_uid, 'result': form_result}
+        self.process_analysis_result(analysis, Result)
 
         # Get all analyses that are calculations
         calc_ans = [
@@ -444,13 +476,14 @@ class ajaxCalculateAnalysisEntry(BrowserView):
                 # break if any dep has no results
                 missing_results = False
                 for interim in interims:
-                    result = self.get_interim_value_by_keyword(
-                        interim['keyword'], results)
-                    if result == 0:
+                    (keyword, result) = self.get_interim_value_by_keyword(
+                        interim['keyword'], self.current_interims)
+                    deps.append((keyword, result))
+                    if result == "0.0":
                         missing_results = True
                         break
                 if not missing_results:
-                    self.process_calculation(calc_an, deps)
+                    self.process_interims(calc_an, deps)
 
         return True
 
@@ -467,6 +500,8 @@ class ajaxCalculateAnalysisEntry(BrowserView):
         self.value = self.request.get('value')
 
         self.current_results = json.loads(self.request.get('results'))
+        self.current_interims = self.request.get('interims')
+        self.current_interims = json.loads(self.request.get('interims'))
         form_results = json.loads(self.request.get('results'))
         self.item_data = json.loads(self.request.get('item_data'))
 

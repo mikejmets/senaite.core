@@ -92,7 +92,7 @@ class window.CalculationUtils
     results = @collect_form_results()
 
     # collect all interim results
-    interims = $('input[interim="true"]');
+    interims = @collect_form_interims()
 
     if @all_results_captured(results, interims) == false
       return
@@ -109,7 +109,7 @@ class window.CalculationUtils
     @clear_alerts el, field, value, item_data, uid
 
     # post result to backend via ajax
-    @post_results form, uid, field, value, item_data, results
+    @post_results form, uid, field, value, item_data, results, interims
 
     return
 
@@ -254,6 +254,26 @@ class window.CalculationUtils
     console.debug 'CalculationUtils: collect_form_results ' + Object.keys(results).length
     return results
 
+  collect_form_interims: =>
+    ###
+     * collect all form interims into a hash (by analysis UID)
+    ###
+    #
+    results = {}
+    $.each $('input[interim="true"]'), (i, e) ->
+      uid = $(e).attr('uid')
+      result = $(e).val().trim()
+      mapping = 
+          keyword:  $(e).attr('field')
+          result:   result
+      if uid of results
+        results[uid].push mapping
+      else
+        results[uid] = [mapping]
+      return
+    console.debug 'CalculationUtils: collect_form_interims ' + Object.keys(results).length
+    return results
+
 
   on_update_success: (form, data) =>
     ###
@@ -308,7 +328,7 @@ class window.CalculationUtils
     return
 
 
-  post_results: (form, uid, field, value, item_data, results) =>
+  post_results: (form, uid, field, value, item_data, results, interims) =>
     ###
      * post all collected results to the backend with the current result's metadata
     ###
@@ -324,6 +344,7 @@ class window.CalculationUtils
             'value': value
             'item_data': item_data
             'results': $.toJSON(results)
+            'interims': $.toJSON(interims)
             'specification': $(".specification").filter(".selected").attr("value")
         dataType: "json"
         success: (data, textStatus, $XHR) ->

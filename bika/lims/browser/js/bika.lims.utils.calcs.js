@@ -11,6 +11,7 @@
     function CalculationUtils() {
       this.post_results = bind(this.post_results, this);
       this.on_update_success = bind(this.on_update_success, this);
+      this.collect_form_interims = bind(this.collect_form_interims, this);
       this.collect_form_results = bind(this.collect_form_results, this);
       this.clear_alerts = bind(this.clear_alerts, this);
       this.all_results_captured = bind(this.all_results_captured, this);
@@ -104,7 +105,7 @@
       el = event.currentTarget;
       form = $(el).parents("form");
       results = this.collect_form_results();
-      interims = $('input[interim="true"]');
+      interims = this.collect_form_interims();
       if (this.all_results_captured(results, interims) === false) {
         return;
       }
@@ -115,7 +116,7 @@
       value = $(el).attr('value');
       item_data = $(el).parents('table').prev('input[name="item_data"]').val();
       this.clear_alerts(el, field, value, item_data, uid);
-      this.post_results(form, uid, field, value, item_data, results);
+      this.post_results(form, uid, field, value, item_data, results, interims);
     };
 
     CalculationUtils.prototype.all_results_captured = function(results, interims) {
@@ -248,6 +249,31 @@
       return results;
     };
 
+    CalculationUtils.prototype.collect_form_interims = function() {
+
+      /*
+       * collect all form interims into a hash (by analysis UID)
+       */
+      var results;
+      results = {};
+      $.each($('input[interim="true"]'), function(i, e) {
+        var mapping, result, uid;
+        uid = $(e).attr('uid');
+        result = $(e).val().trim();
+        mapping = {
+          keyword: $(e).attr('field'),
+          result: result
+        };
+        if (uid in results) {
+          results[uid].push(mapping);
+        } else {
+          results[uid] = [mapping];
+        }
+      });
+      console.debug('CalculationUtils: collect_form_interims ' + Object.keys(results).length);
+      return results;
+    };
+
     CalculationUtils.prototype.on_update_success = function(form, data) {
 
       /*
@@ -294,7 +320,7 @@
       }
     };
 
-    CalculationUtils.prototype.post_results = function(form, uid, field, value, item_data, results) {
+    CalculationUtils.prototype.post_results = function(form, uid, field, value, item_data, results, interims) {
 
       /*
        * post all collected results to the backend with the current result's metadata
@@ -312,6 +338,7 @@
           'value': value,
           'item_data': item_data,
           'results': $.toJSON(results),
+          'interims': $.toJSON(interims),
           'specification': $(".specification").filter(".selected").attr("value")
         },
         dataType: "json",
