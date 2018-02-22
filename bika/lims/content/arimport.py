@@ -39,6 +39,7 @@ from Products.DataGridField import Column
 from Products.DataGridField import DataGridField
 from Products.DataGridField import DataGridWidget
 from Products.DataGridField import DateColumn
+from Products.DataGridField import DatetimeColumn
 from Products.DataGridField import LinesColumn
 from Products.DataGridField import SelectColumn
 from plone import api as ploneapi
@@ -191,7 +192,7 @@ SampleData = DataGridField(
         columns={
             'ClientSampleID': Column('Sample ID'),
             'SamplingDate': DateColumn('Sampling Date'),
-            'DateSampled': DateColumn('Date Sampled'),
+            'DateSampled': DatetimeColumn('Date Sampled'),
             'SamplePoint': SelectColumn(
                 'Sample Point', vocabulary='Vocabulary_SamplePoint'),
             'SampleMatrix': SelectColumn(
