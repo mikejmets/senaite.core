@@ -5,8 +5,9 @@
 # Copyright 2018 by it's authors.
 # Some rights reserved. See LICENSE.rst, CONTRIBUTORS.rst.
 
+from copy import deepcopy
 import json
-from bika.lims import api
+# from bika.lims import api
 from bika.lims import bikaMessageFactory as _
 from bika.lims import logger
 from bika.lims.browser import BrowserView, ulocalized_time
@@ -14,9 +15,10 @@ from bika.lims.browser.bika_listing import BikaListingView
 from bika.lims.content.arimport import get_row_container
 from bika.lims.content.arimport import get_row_profile_services
 from bika.lims.content.arimport import get_row_services
-from bika.lims.content.arimport import convert_date_string
-from bika.lims.content.arimport import lookup_sampler_uid
-from bika.lims.idserver import renameAfterCreation
+# from bika.lims.content.arimport import convert_date_string
+# from bika.lims.content.arimport import lookup_sampler_uid
+# from bika.lims.idserver import renameAfterCreation
+from bika.lims.utils.analysisrequest import create_analysisrequest
 from bika.lims.interfaces import IClient
 from bika.lims.utils import tmpID
 from bika.lims.workflow import getTransitionDate
@@ -26,14 +28,14 @@ from plone.app.layout.globals.interfaces import IViewView
 from plone.protect import CheckAuthenticator
 from Products.Archetypes.utils import addStatusMessage
 from Products.CMFCore.utils import getToolByName
-from Products.Archetypes.event import ObjectInitializedEvent
+# from Products.Archetypes.event import ObjectInitializedEvent
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import _createObjectByType
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from zope.interface import alsoProvides
 from zope.interface import implements
 
-from zope import event
+# from zope import event
 
 import os
 
@@ -277,6 +279,9 @@ class ARImportAsyncView(BrowserView):
 
     def __call__(self):
 
+        ar_list = []
+        error_list = []
+        row_cnt = 0
         form = self.request.form
         gridrows = json.loads(form.get('gridrows', '[]'))
         client_uid = form.get('client_uid', None)
@@ -289,110 +294,166 @@ class ARImportAsyncView(BrowserView):
             batch = ploneapi.content.get(UID=batch_uid)
         client_ref = form.get('client_ref', None)
         client_order_num = form.get('client_order_num', None)
-        contact = None
+        # contact = None
         contact_uid = form.get('contact_uid', None)
-        if contact_uid is not None:
-            contact = ploneapi.content.get(UID=contact_uid)
+        # if contact_uid is not None:
+        #     contact = ploneapi.content.get(UID=contact_uid)
 
-        workflow = ploneapi.portal.get_tool('portal_workflow')
+        # workflow = ploneapi.portal.get_tool('portal_workflow')
         bsc = ploneapi.portal.get_tool('bika_setup_catalog')
         profiles = [x.getObject() for x in bsc(
             portal_type='AnalysisProfile',
             inactive_state='active')]
 
-        ar_list = []
-        error_list = []
         row_cnt = 0
         for therow in gridrows:
-            row = therow.copy()
+            row = deepcopy(therow)
             row_cnt += 1
-            # Create Sample
-            sample = _createObjectByType('Sample', client, tmpID())
-            sample.unmarkCreationFlag()
-            # First convert all row values into something the field can take
-            sample.edit(**row)
-            sample._renameAfterCreation()
-            event.notify(ObjectInitializedEvent(sample))
-            sample.at_post_create_script()
-            bika_setup = api.get_bika_setup()
-            swe = bika_setup.getSamplingWorkflowEnabled()
-            if swe:
-                workflow.doActionFor(sample, 'sampling_workflow')
-            else:
-                workflow.doActionFor(sample, 'no_sampling_workflow')
-            part = _createObjectByType('SamplePartition', sample, 'part-1')
-            part.unmarkCreationFlag()
-            renameAfterCreation(part)
-            if swe:
-                workflow.doActionFor(part, 'sampling_workflow')
-            else:
-                workflow.doActionFor(part, 'no_sampling_workflow')
+
+            # Profiles are titles, profile keys, or UIDS: convert them to UIDs.
+            newprofiles = []
+            for title in row['Profiles']:
+                objects = [x for x in profiles
+                           if title in (x.getProfileKey(), x.UID(), x.Title())]
+                for obj in objects:
+                    newprofiles.append(obj.UID())
+            row['Profiles'] = newprofiles
+
+            # Same for analyses
+            newanalyses = set(get_row_services(row)[0] +
+                              get_row_profile_services(row)[0])
+            # get batch
+            # batch = self.schema['Batch'].get(self)
+            if batch:
+                row['Batch'] = batch_uid
+            # Add AR fields from schema into this row's data
+            row['ClientReference'] = client_ref  # self.getClientReference()
+            row['ClientOrderNumber'] = client_order_num  # self.getClientOrderNumber()
+            # contact_uid =\
+            #     self.getContact().UID() if self.getContact() else None
+            row['Contact'] = contact_uid
+            # Creating analysis request from gathered data
+            ar = create_analysisrequest(
+                client,
+                self.request,
+                row,
+                analyses=list(newanalyses),
+                partitions=None,)
+
+            ar_list.append(ar.getId())
+            logger.info('Created AR %s' % ar.getId())
+
             # Container is special... it could be a containertype.
             container = get_row_container(row)
             if container:
                 if container.portal_type == 'ContainerType':
                     containers = container.getContainers()
+                # TODO: Since containers don't work as is expected they
+                # should work, I am keeping the old logic for AR import...
+                part = ar.getPartitions()[0]
                 # XXX And so we must calculate the best container for this partition
                 part.edit(Container=containers[0])
 
-            # Profiles are titles, profile keys, or UIDS: convert them to UIDs.
-            newprofiles = []
-            for title in row['Profiles']:
-                objects = []
-                for x in profiles:
-                    if title in (x.getProfileKey(), x.UID(), x.Title()):
-                        objects.append(x)
-                for obj in objects:
-                    newprofiles.append(obj.UID())
-            row['Profiles'] = newprofiles
+        #     # progress marker update
+        #     progress_index = float(row_cnt) / len(gridrows) * 100
+        #     progress = ProgressState(self.REQUEST, progress_index)
+        #     notify(UpdateProgressEvent(progress))
 
-            # BBB in bika.lims < 3.1.9, only one profile is permitted
-            # on an AR.  The services are all added, but only first selected
-            # profile name is stored.
-            row['Profile'] = newprofiles[0] if newprofiles else None
+        # # document has been written to, and redirect() fails here
+        # self.REQUEST.response.write(
+        #     '<script>document.location.href="%s"</script>' % (
+        #         self.absolute_url()))
 
-            # Same for analyses
-            (analyses, errors) = get_row_services(row)
-            if errors:
-                for err in errors:
-                    error_list(err)
-            newanalyses = set(analyses)
-            (analyses, errors) = get_row_profile_services(row)
-            if errors:
-                for err in errors:
-                    error_list(err)
-            newanalyses.update(analyses)
-            row['Analyses'] = []
-            # get batch
-            if batch is not None:
-                row['Batch'] = batch
-            # Add AR fields from schema into this row's data
-            if client_ref:
-                row['ClientReference'] = client_ref
-            if client_order_num:
-                row['ClientOrderNumber'] = client_order_num
-            if contact:
-                row['Contact'] = contact
-            row['DateSampled'] = convert_date_string(row['DateSampled'])
-            if row['Sampler']:
-                row['Sampler'] = lookup_sampler_uid(row['Sampler'])
+        # for therow in gridrows:
+        #     row = therow.copy()
+        #     row_cnt += 1
+        #     # Create Sample
+        #     sample = _createObjectByType('Sample', client, tmpID())
+        #     sample.unmarkCreationFlag()
+        #     # First convert all row values into something the field can take
+        #     sample.edit(**row)
+        #     sample._renameAfterCreation()
+        #     event.notify(ObjectInitializedEvent(sample))
+        #     sample.at_post_create_script()
+        #     bika_setup = api.get_bika_setup()
+        #     swe = bika_setup.getSamplingWorkflowEnabled()
+        #     if swe:
+        #         workflow.doActionFor(sample, 'sampling_workflow')
+        #     else:
+        #         workflow.doActionFor(sample, 'no_sampling_workflow')
+        #     part = _createObjectByType('SamplePartition', sample, 'part-1')
+        #     part.unmarkCreationFlag()
+        #     renameAfterCreation(part)
+        #     if swe:
+        #         workflow.doActionFor(part, 'sampling_workflow')
+        #     else:
+        #         workflow.doActionFor(part, 'no_sampling_workflow')
+        #     # Container is special... it could be a containertype.
+        #     container = get_row_container(row)
+        #     if container:
+        #         if container.portal_type == 'ContainerType':
+        #             containers = container.getContainers()
+        #         # XXX And so we must calculate the best container for this partition
+        #         part.edit(Container=containers[0])
 
-            # Create AR
-            ar = _createObjectByType("AnalysisRequest", client, tmpID())
-            ar.setSample(sample)
-            ar.unmarkCreationFlag()
-            ar.edit(**row)
-            ar._renameAfterCreation()
-            ar.setAnalyses(list(newanalyses))
-            for analysis in ar.getAnalyses(full_objects=True):
-                analysis.setSamplePartition(part)
-            ar.at_post_create_script()
-            if swe:
-                workflow.doActionFor(ar, 'sampling_workflow')
-            else:
-                workflow.doActionFor(ar, 'no_sampling_workflow')
-            ar_list.append(ar.getId())
-            logger.info('Created AR %s' % ar.getId())
+        #     # Profiles are titles, profile keys, or UIDS: convert them to UIDs.
+        #     newprofiles = []
+        #     for title in row['Profiles']:
+        #         objects = []
+        #         for x in profiles:
+        #             if title in (x.getProfileKey(), x.UID(), x.Title()):
+        #                 objects.append(x)
+        #         for obj in objects:
+        #             newprofiles.append(obj.UID())
+        #     row['Profiles'] = newprofiles
+
+        #     # BBB in bika.lims < 3.1.9, only one profile is permitted
+        #     # on an AR.  The services are all added, but only first selected
+        #     # profile name is stored.
+        #     row['Profile'] = newprofiles[0] if newprofiles else None
+
+        #     # Same for analyses
+        #     (analyses, errors) = get_row_services(row)
+        #     if errors:
+        #         for err in errors:
+        #             error_list(err)
+        #     newanalyses = set(analyses)
+        #     (analyses, errors) = get_row_profile_services(row)
+        #     if errors:
+        #         for err in errors:
+        #             error_list(err)
+        #     newanalyses.update(analyses)
+        #     row['Analyses'] = []
+        #     # get batch
+        #     if batch is not None:
+        #         row['Batch'] = batch
+        #     # Add AR fields from schema into this row's data
+        #     if client_ref:
+        #         row['ClientReference'] = client_ref
+        #     if client_order_num:
+        #         row['ClientOrderNumber'] = client_order_num
+        #     if contact:
+        #         row['Contact'] = contact
+        #     row['DateSampled'] = convert_date_string(row['DateSampled'])
+        #     if row['Sampler']:
+        #         row['Sampler'] = lookup_sampler_uid(row['Sampler'])
+
+        #     # Create AR
+        #     ar = _createObjectByType("AnalysisRequest", client, tmpID())
+        #     ar.setSample(sample)
+        #     ar.unmarkCreationFlag()
+        #     ar.edit(**row)
+        #     ar._renameAfterCreation()
+        #     ar.setAnalyses(list(newanalyses))
+        #     for analysis in ar.getAnalyses(full_objects=True):
+        #         analysis.setSamplePartition(part)
+        #     ar.at_post_create_script()
+        #     if swe:
+        #         workflow.doActionFor(ar, 'sampling_workflow')
+        #     else:
+        #         workflow.doActionFor(ar, 'no_sampling_workflow')
+        #     ar_list.append(ar.getId())
+        #     logger.info('Created AR %s' % ar.getId())
         logger.info('AR Import Complete')
 
         # Email user
