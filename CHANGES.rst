@@ -1,8 +1,27 @@
 Changelog
 =========
 
+1.2.4 (unreleased)
+------------------
 
-1.2.3 (unreleased)
+**Added**
+
+
+**Changed**
+
+
+**Removed**
+
+
+**Fixed**
+
+- #698 Fix Publish Actions for Batches
+- #696 Filter worksheets by department. The worksheet count in the dashboard is now properly updated accordingly to the selected departments
+
+**Security**
+
+
+1.2.3 (2018-02-23)
 ------------------
 
 **Added**
@@ -12,6 +31,13 @@ Changelog
 
 **Changed**
 
+- #690 Refactored and improved client folder listing view
+- #689 Allow to hide Analyses in any AR state
+- #685 Display the stacked bars in evo charts sorted by number of occurrences
+- #685 Small changes in colours palette for evo charts from Dashboard
+- #684 Aggregated lists of analyses set to read-only mode
+- #674 Dashboard with slightly better performance
+- #621 AnalysesView code refactoring
 - #668 AR Add: Debounce expensive XHR calls
 - #660 Better style for reference widgets
 - #627 Unassigned filter on Analysis Requests view does not work
@@ -22,11 +48,17 @@ Changelog
 - #647 Refactored bika.lims.bikalisting.js + several functional fixtures
 - #637 Deassociate Analysis Request portal type from `worksheetanalysis_workflow`
 
-**Removed**
-
-
 **Fixed**
 
+- #688 A traceback was appearing when navigating to rejected samples
+- #686 Balloon button for adding Remarks is displayed while disabled in Setup
+- #681 Invalidated Analysis Requests do not appear on Dashboard's evo chart
+- #680 Fix Traceback with periodicity in DashboardView
+- #679 Analysis could not set to "Hidden" in results view
+- #677 Fix category toggling when the category name contains spaces
+- #672 Traceback on automatic sticker printing in batch context
+- #673 QC Analyses and Samples not totaled correctly in Worksheets list
+- #670 Listings: Fix sort_on change on Show More click
 - #653 Points in QC Charts are not displayed in accordance with capture date
 - #662 Viewing Cancelled AR's fails
 - #550 Wrong Listings of Analyses called from Dashboard
@@ -42,8 +74,6 @@ Changelog
 - #637 Analysis Requests are never transitioned to assigned/unassigned
 - #641 Broken Analyses list on ReferenceSample in Supplier
 - #640 Broken Reference Sample Results view
-
-**Security**
 
 
 1.2.2 (2018-02-09)
