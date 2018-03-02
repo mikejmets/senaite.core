@@ -536,7 +536,6 @@ class AnalysesView(BikaListingView):
         # analysis) or if is a Reference Sample (Reference Analysis). If the
         # analysis is a duplicate, it returns the Sample Type of the sample
         # associated to the source analysis.
-        self._folder_item_converted_result(obj, item)
         item['st_uid'] = obj.getSampleTypeUID
 
         # Fill item's category
@@ -577,6 +576,8 @@ class AnalysesView(BikaListingView):
         self._folder_item_dry_matter(obj, item)
         # Renders remarks toggle button
         self._folder_item_remarks(obj, item)
+        # Fill converted results
+        self._folder_item_converted_result(obj, item)
 
         return item
 
@@ -720,8 +721,7 @@ class AnalysesView(BikaListingView):
         full_obj = self.get_object(analysis_brain)
         item['ConvertedResult'] = ''
         # add unit conversion information
-        ignored_states = ('retracted', 'sample_due',
-                          'sampled', 'sample_received')
+        ignored_states = ('retracted', 'sample_due', 'sampled')
         if item['review_state'] not in ignored_states and item['Result'] != '':
             # calculate the converted result
             # note if more than one can be resolved, only the last is used
