@@ -528,8 +528,6 @@ class AnalysesView(BikaListingView):
         item['Unit'] = format_supsub(obj.getUnit) if obj.getUnit else ''
         item['retested'] = obj.getRetested
         item['class']['retested'] = 'center'
-        # **** Start converted unit ****
-        # **** Start converted unit ****
 
         # Note that getSampleTypeUID returns the type of the Sample, no matter
         # if the sample associated to the analysis is a regular Sample (routine

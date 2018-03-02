@@ -10,6 +10,8 @@ import Zope2
 from Acquisition import aq_base
 from AccessControl.PermissionRole import rolesForPermissionOn
 
+from collective.taskqueue.interfaces import ITaskQueue
+
 from datetime import datetime
 from DateTime import DateTime
 
@@ -23,6 +25,7 @@ from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFCore.utils import getToolByName
 
 from zope import globalrequest
+from zope.component import queryUtility
 from zope.event import notify
 from zope.interface import implements
 from zope.component import getUtility
@@ -43,6 +46,7 @@ from plone.i18n.normalizer.interfaces import IFileNameNormalizer
 from plone.i18n.normalizer.interfaces import IIDNormalizer
 
 from bika.lims import logger
+from bika.lims import bikaMessageFactory as _
 from bika.lims.browser import BrowserView
 
 """Bika LIMS Framework API
@@ -1192,6 +1196,7 @@ def is_uid(uid, validate=False):
         assert (len(brains) == 1)
     return len(brains) > 0
 
+
 class AsyncView(BrowserView):
 
     def async_sample_and_receive(self):
@@ -1248,6 +1253,50 @@ class AsyncView(BrowserView):
 
         do_transition_for(obj, action_id)
         logger.info('async_transition_object server complete')
+
+
+def async_sample_and_receive(brain_or_object, context, dateSampled, sampler):
+    """Performs a workflow transition sample and receive for provided object.
+
+    :param brain_or_object: A single catalog brain or content object
+    :returns: The object where the transtion was performed
+    """
+    if len(sampler) == 0 or dateSampled is None:
+        message = context.translate(
+                _("Sampler and DateSampled are required"))
+        context.plone_utils.addPortalMessage(message, 'error')
+        return
+    obj = get_object(brain_or_object)
+    task_queue = queryUtility(ITaskQueue, name='sample-receive')
+    if task_queue is not None:
+        logger.info('Queue sample and receive')
+        path = [i for i in context.getPhysicalPath()]
+        path.append('async_sample_and_receive')
+        path = '/'.join(path)
+
+        params = {
+                  'obj_uid': obj.UID(),
+                  'dateSampled': dateSampled,
+                  'sampler': sampler,
+                }
+        logger.info('Queue Task: path=%s' % path)
+        task_id = task_queue.add(path,
+                method='POST',
+                params=params)
+        message = context.translate(
+                _("Submitted %s to the queue for processing" % (
+                    obj.Title())))
+        context.plone_utils.addPortalMessage(message, 'info')
+    else:
+        logger.info('Non-Queue sample and receive')
+        logger.info('******' * 8 )
+        obj.setDateSampled(dateSampled)
+        obj.setSampler(sampler)
+        do_transition_for(obj, 'sample')
+        do_transition_for(obj, 'receive')
+        message = context.translate(
+                _("Sampled and Received %s" % ( obj.Title())))
+        context.plone_utils.addPortalMessage(message, 'info')
 
 def is_date(date):
     """Checks if the passed in value is a valid Zope's DateTime

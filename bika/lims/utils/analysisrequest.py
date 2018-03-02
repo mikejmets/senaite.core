@@ -170,10 +170,10 @@ def create_analysisrequest(client, request, values, analyses=None,
     if reject_field and reject_field.get('checkbox', False):
         doActionFor(ar, 'reject')
 
-    bika_setup = api.get_bika_setup()
-    if bika_setup.getRegisterAsReceivd():
-        # Transition AR and analyses to Received state
-        doActionFor(ar, 'receive')
+    # bika_setup = api.get_bika_setup()
+    # if bika_setup.getRegisterAsReceivd():
+    #     # Transition AR and analyses to Received state
+    #     doActionFor(ar, 'receive')
 
     return ar
 

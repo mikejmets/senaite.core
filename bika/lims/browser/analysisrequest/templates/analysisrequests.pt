@@ -77,7 +77,7 @@
 				var ar_queue_max_seconds = 20;
 				function query_pending() {
 					var url = window.portal_url +
-					    "/analysisrequests/queued_ars";
+					    "/analysisrequests/queued_ars?name=ar-create";
 					var ac = readCookie('__ac');
 					$.post(url, {'__ac': ac}).done(function(data) {
 						var num_jobs = $.parseJSON(data);

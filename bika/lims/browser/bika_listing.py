@@ -28,6 +28,7 @@ from bika.lims.utils import t
 from bika.lims.utils import to_utf8
 from bika.lims.workflow import doActionFor, doAsyncActionFor
 from bika.lims.workflow import skip
+from plone import api as ploneapi
 from plone.app.content.browser import tableview
 from plone.memoize import view as viewcache
 from Products.CMFCore.utils import getToolByName
@@ -169,6 +170,62 @@ class WorkflowAction:
         )
         self.destination_url = url
         self.request.response.redirect(url)
+
+    def workflow_action_sample_and_receive(self):
+        """Invoked from an AR listing form in the current context,
+        passing the selected AR
+        titles and default sticker template as request parameters.
+        """
+        form = self.request.form
+
+        def getValueByKey(value_list, key):
+            for adict in value_list:
+                return adict.get(key, None)
+
+        objects = WorkflowAction._get_selected_items(self)
+        if not objects:
+            message = self.context.translate(
+                _("No ARs have been selected"))
+            self.context.plone_utils.addPortalMessage(message, 'info')
+            self.destination_url = self.context.absolute_url()
+            self.request.response.redirect(self.destination_url)
+            return
+
+        ids = []
+        for key in objects.keys():
+            obj = objects[key]
+            ids.append(obj.Title())
+            messages = []
+            if ploneapi.content.get_state(obj) != 'to_be_sampled':
+                messages.append('Not in "To Be Sampled" state')
+            dateSampled = None
+            if obj.getDateSampled():
+                dateSampled = obj.getDateSampled()
+            else:
+                dateSampled = getValueByKey(form.get('getDateSampled'), key)
+            if dateSampled is None:
+                messages.append('Requires DateSampled')
+            sampler = None
+            if obj.getSampler():
+                sampler = obj.getSampler()
+            else:
+                sampler = getValueByKey(form.get('getSampler'), key)
+            if sampler is None:
+                messages.append('Requires Sampler')
+
+            if len(messages) > 0:
+                message = self.context.translate(
+                    _('Transition errors for %s: %s' % (
+                        obj.Title(), ', '.join(messages))))
+                self.context.plone_utils.addPortalMessage(message, 'error')
+                self.request.response.redirect(self.context.absolute_url())
+            else:
+                import pdb; pdb.set_trace()
+                api.async_sample_and_receive(
+                        objects[key], self.context, dateSampled, sampler)
+
+        self.request.response.redirect(self.context.absolute_url())
+        return
 
     def __call__(self):
         request = self.request

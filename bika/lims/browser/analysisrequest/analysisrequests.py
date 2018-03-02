@@ -238,6 +238,11 @@ class AnalysisRequestsView(BikaListingView):
             "url": "workflow_action?action=print_stickers"
         }
 
+        sample_and_receive = {
+                "id": "sample_and_receive",
+                "title": _("Sample & Receive"),
+                "url": "workflow_action?action=sample_and_receive"}
+
         self.review_states = [
             {
                 "id": "default",
@@ -258,7 +263,7 @@ class AnalysisRequestsView(BikaListingView):
                     {"id": "cancel"},
                     {"id": "reinstate"},
                 ],
-                "custom_transitions": [print_stickers],
+                "custom_transitions": [print_stickers, sample_and_receive],
                 "columns": self.columns.keys(),
             }, {
                 "id": "to_be_sampled",
@@ -272,7 +277,7 @@ class AnalysisRequestsView(BikaListingView):
                     {"id": "submit"},
                     {"id": "cancel"},
                 ],
-                "custom_transitions": [print_stickers],
+                "custom_transitions": [print_stickers, sample_and_receive],
                 "columns": self.columns.keys()
             }, {
                 "id": "to_be_preserved",
@@ -286,7 +291,7 @@ class AnalysisRequestsView(BikaListingView):
                     {"id": "preserve"},
                     {"id": "cancel"},
                 ],
-                "custom_transitions": [print_stickers],
+                "custom_transitions": [print_stickers, sample_and_receive],
                 "columns": self.columns.keys(),
             }, {
                 "id": "scheduled_sampling",
@@ -300,7 +305,7 @@ class AnalysisRequestsView(BikaListingView):
                     {"id": "sample"},
                     {"id": "cancel"},
                 ],
-                "custom_transitions": [print_stickers],
+                "custom_transitions": [print_stickers, sample_and_receive],
                 "columns": self.columns.keys(),
             }, {
                 "id": "sample_due",
@@ -319,7 +324,7 @@ class AnalysisRequestsView(BikaListingView):
                     {"id": "cancel"},
                     {"id": "reinstate"},
                 ],
-                "custom_transitions": [print_stickers],
+                "custom_transitions": [print_stickers, sample_and_receive],
                 "columns": self.columns.keys(),
             }, {
                 "id": "sample_received",
@@ -334,7 +339,7 @@ class AnalysisRequestsView(BikaListingView):
                     {"id": "cancel"},
                     {"id": "reinstate"},
                 ],
-                "custom_transitions": [print_stickers],
+                "custom_transitions": [print_stickers, sample_and_receive],
                 "columns": self.columns.keys(),
             }, {
                 "id": "to_be_verified",
@@ -351,7 +356,7 @@ class AnalysisRequestsView(BikaListingView):
                     {"id": "cancel"},
                     {"id": "reinstate"},
                 ],
-                "custom_transitions": [print_stickers],
+                "custom_transitions": [print_stickers, sample_and_receive],
                 "columns": self.columns.keys(),
             }, {
                 "id": "verified",
@@ -365,7 +370,7 @@ class AnalysisRequestsView(BikaListingView):
                     {"id": "publish"},
                     {"id": "cancel"},
                 ],
-                "custom_transitions": [print_stickers],
+                "custom_transitions": [print_stickers, sample_and_receive],
                 "columns": self.columns.keys(),
             }, {
                 "id": "published",
@@ -410,7 +415,7 @@ class AnalysisRequestsView(BikaListingView):
                     {"id": "cancel"},
                     {"id": "reinstate"},
                 ],
-                "custom_transitions": [print_stickers],
+                "custom_transitions": [print_stickers, sample_and_receive],
                 "columns": self.columns.keys(),
             }, {
                 "id": "cancelled",
@@ -445,7 +450,7 @@ class AnalysisRequestsView(BikaListingView):
                     "sort_order": "descending",
                 },
                 "transitions": [],
-                "custom_transitions": [print_stickers],
+                "custom_transitions": [print_stickers, sample_and_receive],
                 "columns": self.columns.keys(),
             }, {
                 "id": "rejected",
@@ -481,7 +486,7 @@ class AnalysisRequestsView(BikaListingView):
                     {"id": "prepublish"},
                     {"id": "cancel"},
                 ],
-                "custom_transitions": [print_stickers],
+                "custom_transitions": [print_stickers, sample_and_receive],
                 "columns": self.columns.keys(),
             }, {
                 "id": "unassigned",
@@ -503,7 +508,7 @@ class AnalysisRequestsView(BikaListingView):
                     {"id": "prepublish"},
                     {"id": "cancel"},
                 ],
-                "custom_transitions": [print_stickers],
+                "custom_transitions": [print_stickers, sample_and_receive],
                 "columns": self.columns.keys(),
             },
         ]
