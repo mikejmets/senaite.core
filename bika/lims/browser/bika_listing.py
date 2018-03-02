@@ -220,7 +220,6 @@ class WorkflowAction:
                 self.context.plone_utils.addPortalMessage(message, 'error')
                 self.request.response.redirect(self.context.absolute_url())
             else:
-                import pdb; pdb.set_trace()
                 api.async_sample_and_receive(
                         objects[key], self.context, dateSampled, sampler)
 
