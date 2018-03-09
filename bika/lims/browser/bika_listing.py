@@ -158,6 +158,7 @@ class WorkflowAction:
             self.portal.bika_setup.getAutoStickerTemplate(),
             ','.join(uids)
         )
+        self.destination_url = url
         self.request.response.redirect(url)
 
     def __call__(self):
@@ -246,20 +247,16 @@ class WorkflowAction:
                     else:
                         success, message = doActionFor(item, action)
                     if success:
-                        transitioned.append(item.id)
+                        transitioned.append(item.UID())
                     else:
                         self.addPortalMessage(message, 'error')
 
         # automatic label printing
-        if transitioned \
-                and action == 'receive' \
-                and 'receive' in self.portal.bika_setup.getAutoPrintStickers():
-            q = "/sticker?template=%s&items=" % \
-                (self.portal.bika_setup.getAutoStickerTemplate())
-            # selected_items is a list of UIDs (stickers for AR_add use IDs)
-            q += ",".join(transitioned)
-            dest = self.context.absolute_url() + q
-            self.destination_url = dest
+        auto_stickers_action = self.portal.bika_setup.getAutoPrintStickers()
+        if transitioned and action == auto_stickers_action:
+            self.request.form['uids'] = transitioned
+            self.workflow_action_print_stickers()
+            dest = self.destination_url
 
         return len(transitioned), dest
 
@@ -591,13 +588,6 @@ class BikaListingView(BrowserView):
         self.member = api.get_current_user()
         self.translate = self.context.translate
 
-        # Sanitize the request form
-        # XXX When does this happen?
-        if self.request.form:
-            for key, value in self.request.form.items():
-                if isinstance(value, list):
-                    self.request.form[key] = self.request.form[key][0]
-
         self.rows_only = self.get_rows_only()
         self.limit_from = self.get_limit_from()
 
@@ -644,9 +634,11 @@ class BikaListingView(BrowserView):
         # get state_id from (request or default_review_states)
         key = "%s_review_state" % self.form_id
         state_id = self.request.form.get(key, self.default_review_state)
+        if not state_id:
+            state_id = self.default_review_state
         states = [r for r in self.review_states if r['id'] == state_id]
         if not states:
-            logger.error("%s.review_states does not contains id='%s'." %
+            logger.error("%s.review_states does not contain id='%s'." %
                          (self, state_id))
             return None
         review_state = states[0] if states else self.review_states[0]

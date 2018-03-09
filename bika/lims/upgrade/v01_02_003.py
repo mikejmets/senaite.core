@@ -4,7 +4,10 @@
 #
 # Copyright 2018 by it's authors.
 # Some rights reserved. See LICENSE.rst, CONTRIBUTORS.rst.
-from bika.lims import logger
+from bika.lims import logger, api
+from bika.lims.catalog.analysisrequest_catalog import \
+    CATALOG_ANALYSIS_REQUEST_LISTING
+from bika.lims.catalog.worksheet_catalog import CATALOG_WORKSHEET_LISTING
 from bika.lims.config import PROJECTNAME as product
 from bika.lims.upgrade import upgradestep
 from bika.lims.upgrade.utils import UpgradeUtils
@@ -28,6 +31,40 @@ def upgrade(tool):
 
     # -------- ADD YOUR STUFF HERE --------
 
+    # Unbound the worksheetanalysis_workflow from Analysis Requests and add a
+    # FieldIndex 'assigned_state' in AR's catalog (for its use on searches)
+    fix_assign_analysis_requests(portal, ut)
+
+    # The number of QC Analyses is not refreshed when a Duplicate or Reference
+    # Sample in a Worksheet. See #673. Thus, worksheets that are not yet in
+    # to_be_verified state needs to be reindexed
+    fix_worksheet_qc_number_analyses_inconsistences(portal, ut)
+
     logger.info("{0} upgraded to version {1}".format(product, version))
 
     return True
+
+
+def fix_assign_analysis_requests(portal, ut):
+    # Remove 'bika_worksheet_analysis_workflow' from AnalysisRequest
+    wfid = 'bika_worksheetanalysis_workflow'
+    wtool = api.get_tool('portal_workflow')
+    chain = wtool.getChainFor('AnalysisRequest')
+    if wfid in chain:
+        # Remove the workflow from AR
+        chain = [ch for ch in chain if ch != wfid]
+        wtool.setChainForPortalTypes(['AnalysisRequest', ], chain)
+
+    # Add the `assigned_state` index for Analysis Request catalog
+    ut.addIndexAndColumn(CATALOG_ANALYSIS_REQUEST_LISTING, 'assigned_state',
+                'FieldIndex')
+    ut.refreshCatalogs()
+
+
+def fix_worksheet_qc_number_analyses_inconsistences(portal, ut):
+    query = {'portal_type': 'Worksheet',
+             'review_state':'open'}
+    brains = api.search(query, CATALOG_WORKSHEET_LISTING)
+    for brain in brains:
+        worksheet = api.get_object(brain)
+        worksheet.reindexObject()
