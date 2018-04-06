@@ -3118,5 +3118,15 @@ class AnalysisRequest(BaseFolder):
             return PRIORITIES.getValue(self.getPriority())
         return ''
 
+    def getDateAnalysisCommenced(self):
+        """Return the date of the earliest result capture of all analyses.
+        """
+        analyses = self.getAnalyses(full_objects=True)
+        earliest = DateTime()
+        for a in analyses:
+            date = a.getResultCaptureDate()
+            if date < earliest:
+                earliest = date
+        return earliest
 
 registerType(AnalysisRequest, PROJECTNAME)
