@@ -120,5 +120,6 @@
        source="1.2.3"
        destination="1.2.4"
        handler="bika.lims.upgrade.v01_02_004.upgrade"
+       profile="bika.lims:default"/>
 
 </configure>
