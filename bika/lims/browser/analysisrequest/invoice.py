@@ -13,6 +13,7 @@ from email.mime.text import MIMEText
 from email.utils import formataddr
 from bika.lims import bikaMessageFactory as _
 from bika.lims.utils import t
+from bika.lims.utils import createPdf
 from bika.lims.browser import BrowserView
 from bika.lims.config import VERIFIED_STATES
 from bika.lims.interfaces import IInvoiceView
@@ -27,6 +28,8 @@ from zope.interface import implements
 from decimal import Decimal
 
 import plone, App
+import os
+from plone import api as ploneapi
 
 class InvoiceView(BrowserView):
 
@@ -41,14 +44,18 @@ class InvoiceView(BrowserView):
     def __call__(self):
         context = self.context
         workflow = getToolByName(context, 'portal_workflow')
+        portal_url = ploneapi.portal.get().absolute_url()
         # Collect related data and objects
         invoice = context.getInvoice()
         sample = context.getSample()
         samplePoint = sample.getSamplePoint()
         reviewState = workflow.getInfoFor(context, 'review_state')
+        self.invoice_url_download = None
         # Collection invoice information
         if invoice:
             self.invoiceId = invoice.getId()
+            if hasattr(invoice, 'Pdf'):
+                self.invoice_url_download = '{}/at_download/Pdf'.format(invoice.absolute_url())
         else:
             self.invoiceId = _('Proforma (Not yet invoiced)')
         # Collect verified invoice information
@@ -207,6 +214,12 @@ class InvoiceCreate(InvoiceView):
         InvoiceView.__call__(self)
         # Get the invoice template in HTML format
         templateHTML = self.print_template()
+        css = os.getcwd() + '/src/senaite.core/bika/lims/skins/bika/bika_invoice.css'
+        invoice_pdf = createPdf(templateHTML, False, css)
+        invoice = self.context.getInvoice()
+        invoice.setPdf(invoice_pdf)
+        invoice.getPdf().setContentType('application/pdf')
+        invoice.getPdf().setFilename("{}.pdf".format(invoice.getId()))
         # Send emails with the invoice
         self.emailInvoice(templateHTML)
         # Reload the page to see the the new fields
