@@ -14,6 +14,7 @@ from bika.lims.interfaces import IInvoice
 from DateTime import DateTime
 from decimal import Decimal
 from persistent.mapping import PersistentMapping
+from plone.app.blob.field import BlobField
 from Products.Archetypes.public import *
 from Products.ATExtensions.ateapi import DateTimeField, DateTimeWidget
 from Products.CMFCore.permissions import View
@@ -101,6 +102,7 @@ schema = BikaSchema.copy() + Schema((
             visible=False,
         ),
     ),
+    BlobField('Pdf',),
 ),
 )
 
