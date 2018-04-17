@@ -14,6 +14,14 @@
 
     <browser:page
       for="bika.lims.interfaces.IBatch"
+      name="batchinvoice"
+      class="bika.lims.browser.batch.batchinvoice.BatchInvoiceView"
+      permission="bika.lims.ManageInvoices"
+      layer="bika.lims.interfaces.IBikaLIMS"
+    />
+
+    <browser:page
+      for="bika.lims.interfaces.IBatch"
       name="analysisrequests"
       class="bika.lims.browser.batch.analysisrequests.AnalysisRequestsView"
       permission="zope2.View"
@@ -57,6 +65,15 @@
       for="bika.lims.interfaces.IBatch"
       provides="bika.lims.interfaces.IDisplayListVocabulary"
       name="getContacts"
+    />
+
+    <browser:page
+      for="bika.lims.interfaces.IBatch"
+      name="issue_invoice"
+      attribute="issue_invoice"
+      class="bika.lims.browser.batch.batchinvoice.BatchInvoiceView"
+      permission="bika.lims.ManageInvoices"
+      layer="bika.lims.interfaces.IBikaLIMS"
     />
 
 </configure>

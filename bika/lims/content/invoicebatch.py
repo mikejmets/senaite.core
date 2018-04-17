@@ -73,6 +73,7 @@ class InvoiceBatch(BaseFolder):
         invoice_id = self.generateUniqueId('Invoice')
         invoice = _createObjectByType("Invoice", self, invoice_id)
         # noinspection PyCallingNonCallable
+        import pdb; pdb.set_trace()
         invoice.edit(
             Client=client_uid,
             InvoiceDate=DateTime(),

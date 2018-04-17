@@ -1,0 +1,394 @@
+
+#lab-logo {
+    float: right
+}
+#section-content{
+    width: 100%;
+}
+
+#section-content h1 { font-size:1.4em; }
+#section-content h2 { font-size:1.2em; }
+#section-content h3 { font-size:1.1em; }
+
+#section-content h1,
+#section-content h2,
+#section-content h3 {
+    font-weight:bold;
+    padding-bottom:5px !important;
+}
+
+#section-content table {
+    width: 100%;
+}
+
+#section-content table tr td,
+#section-content table tr th {
+    text-align:left;
+    vertical-align:top;
+}
+#section-content .label {
+    font-weight:bold;
+    padding-right: 10px;
+}
+#section-content .outofrange,
+#section-content .outofrange a {
+    font-weight:bold;
+    color:#d40000;
+}
+#section-content .units,
+#section-content .units sub,
+#section-content .units sup {
+    color:#777;
+    font-weight:normal;
+    font-style:italic;
+}
+#section-content .units sub,
+#section-content .units sup {
+    font-size:7pt;
+}
+#section-info{
+    border-bottom:5px solid #fff;
+    width: 100%;
+}
+#tax-info{
+    text-align: center;
+    width: 100%;
+    padding: 5px;
+    font-weight: bold;
+}
+
+#invoice-info{
+    text-align: center;
+    width: 100%;
+    padding: 5px;
+    font-weight: bold;
+}
+
+#section-content table#section-header{
+    border-bottom:1px solid #000;
+}
+
+#section-content table#section-header,
+#section-content table#section-info {
+    
+}
+#section-content table#section-header td#accreditation-logo {
+    width:80mm;
+}
+#section-content table#section-info td#lab-info {
+    width:80mm;
+}
+#section-content #section-alert {
+    padding:5px;
+    border:1px solid #CDCDCD;
+    background-color:#ffffff;
+    margin:0px;
+}
+#section-content #section-alert h1 {
+    font-size:1em;
+    margin:0px;
+    padding:0;
+    border:none;
+    color:#d40000;
+}
+#section-content #section-results,
+#section-content #section-qcresults,
+#section-content #section-resultsinterpretation {
+    padding-top:20px;
+}
+#section-content #section-summary table tr td,
+#section-content #section-results table tr td,
+#section-content #section-qcresults table tr td {
+    padding-left:5px;
+}
+#section-content #section-summary tr td {
+    border-left-width: 0px;
+    border-bottom:1px solid #ccc;
+}
+#section-content #section-summary tr td.label {
+    width:60mm;
+}
+#section-content #section-results table thead tr th,
+#section-content #section-qcresults table thead tr th {
+    padding-right:10px;
+}
+#section-content #section-results table thead tr th span,
+#section-content #section-qcresults table thead tr th span {
+    display:block;
+    border-bottom:1px solid #000;
+    line-height:1.6;
+}
+#section-content #section-results .result {
+    width:100px;
+}
+#section-content #section-results .specs {
+    width:200px;
+    text-align:center;
+    padding-right:10px;
+}
+#section-content #section-results .outofrange {
+    width:10px;
+}
+#section-content #section-results .remarks {
+    font-size: 0.9em;
+    padding: 0 400px 15px 3px;
+    color: #555;
+}
+#section-content #section-qcresults .result {
+    width:60px;
+}
+#section-content #section-qcresults .specs {
+    width:100px;
+    text-align:center;
+    padding-right:10px;
+}
+#section-content #section-qcresults .worksheet {
+    width:80px;
+}
+#section-content #section-qcresults .refsample {
+    width:200px;
+}
+#section-content #section-qcresults .outofrange {
+    width:10px;
+}
+#section-content .attachment {
+    padding-bottom: 1em;
+}
+#section-content .inline-attachment-horizontal {
+    width: 100%;
+}
+#section-content .inline-attachment-landscape {
+    width: 100%;
+}
+#section-content #section-signatures {
+    padding:10mm 0 5mm;
+}
+#section-discreeter {
+    color:#444;
+}
+#section-discreeter * {
+    font-size:0.9em;
+}
+#section-discreeter ol {
+    margin:0;
+    padding: 0 0 0 15px;
+}
+#section-content .page-footer .barcode-container {
+    text-align:right;
+}
+#section-content .barcode {
+    float: right;
+}
+#section-content #ariddept {
+    font-size: 10px;
+    overflow: auto;
+    padding: 0 10px 5px;
+    text-align: right;
+}
+#section-content div#section-info td {
+    vertical-align: top;
+}
+#section-content div#section-info td a {
+    text-decoration: none;
+}
+#section-content div#section-info table {
+    width: 100%;
+}
+#section-content img.accredited-ico {
+    vertical-align:bottom;
+    padding-right:5px;
+}
+#section-content .category_comments {
+    color: #333;
+    font-size: 11px;
+    line-height: 130%;
+    padding: 10px 15px 15px;
+}
+
+#section-content .page-footer table {
+    border-top: 1px solid #aaaaaa;
+    padding: 5px 0;
+    width: 100%;
+}
+.table { display:table; table-layout:auto; width:100%; }
+.row { display:table-row !important }
+.th { display:table-cell; font-weight:bold; }
+.td {
+    display:table-cell;
+    border-collapse: collapse;
+}
+.remarks{
+    width:100% !important;
+    bottom: 90px}
+.table_header{
+    width: 100%;
+    padding: 0;
+}
+.td_logo{
+    width: 34%;
+}
+.td_coa{
+    width: 34%;
+    text-align: center;
+}
+.td_numbering{
+    width: 34%;
+    text-align: right;
+    vertical-align:top;
+}
+
+.lab-manager{
+    float: right;
+    padding-bottom: 5px;
+}
+
+.lab-manager-name{
+    width:79%;
+    float:left;
+    font-size: 10px;
+}
+.lab-manager-date{
+    float:right;
+    font-size: 10px;
+    width:20%;
+}
+
+.lab-manager-terms{
+    clear: both;
+    font-size: 8px; 
+    text-align: left;
+}
+
+.an_table {
+    font-size: 82.5%;
+    /*
+    border-top:1px solid #cdcdcd;
+    border-left:1px solid #cdcdcd;
+    float: left;
+    */
+    width:340px !important;
+    padding: 10px 10px 10px 0px;
+    padding-left:15px;
+    min-height: 100px !important;
+    display: inline-block;
+    vertical-align: top;
+}
+.an_table:nth-child(odd){
+    /*
+    float: right;
+    display: inline-block;
+    */
+}
+.an_table .header_th {
+    font-weight:bold;
+    padding: 2px 2px 2px 0;
+}
+.an_table .header_td {
+    text-align: center;
+    font-weight:bold;
+    padding:2px;
+}
+.an_table .th {
+    background: black;
+    color: white;
+    padding:1px;
+    border-bottom:1px solid #cdcdcd;
+    border-right:1px solid #cdcdcd;
+}
+.an_table .row {
+}
+.an_table .width2 {
+    width: 300px;
+}
+.an_table .width3 {
+    width: 260px;
+}
+.an_table .width4 {
+    width: 220px;
+}
+.an_table .width5 {
+    width: 180px;
+}
+.an_table .th:nth-child(2){
+    width: 40px !important;
+    text-align: center !important;
+}
+.an_table .th:nth-child(3){
+    width: 40px !important;
+    text-align: center !important;
+}
+.an_table .th:nth-child(4){
+    width: 40px !important;
+    text-align: center !important;
+}
+.an_table .th:nth-child(5){
+    width: 40px !important;
+    text-align: center !important;
+}
+.an_table .td:nth-child(1){
+    text-align: left;
+}
+.an_table .td {
+    padding:1px;
+    border-bottom:1px solid #cdcdcd;
+    border-right:1px solid #cdcdcd;
+    border-left:1px solid #cdcdcd;
+    text-align: right;
+}
+.cat_title {
+    background: #dddddd;
+    color: #444444;
+    padding:2px 0px 2px 0px;
+    padding-top:7px;
+}
+.an_table_image {
+    width:218px !important;
+    min-height: 100px !important;
+    display: inline-block;
+    vertical-align: top;
+    float: right;
+}
+.td_vertical_align{
+    vertical-align: top;
+}
+
+.ar-image{
+    width:100%;
+}
+.fifty_percent{
+    width:50%;
+}
+.signature{
+    height:80px;
+}
+#invoice-info .table{
+    width: 100%;
+    border-collapse: collapse;
+}
+div.row{
+    float: none
+}
+#invoice-info .table .row{
+    display:table-row !important;
+    width: 100%;
+    float: none;
+}
+#invoice-info .table .row .td{
+    border: 1px solid black;
+    padding: 3px;
+    white-space: nowrap;
+}
+.empty{
+    visibility: hidden !important;
+}
+
+#invoice-info .table .row .td .empty{
+    visibility: hidden !important;
+}
+.bank-info{
+    width: 30% !important;
+}
+.table .bank-info{
+    width: 30%;
+    border-collapse: collapse;
+}

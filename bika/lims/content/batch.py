@@ -17,6 +17,7 @@ from bika.lims.interfaces import IBatch, IBatchSearchableText, IClient
 from bika.lims.workflow import (BatchState, CancellationState, StateFlow,
                                 getCurrentState)
 from plone.app.folder.folder import ATFolder
+from plone.app.blob.field import BlobField
 from plone.indexer import indexer
 from Products.Archetypes.public import (DateTimeField, DisplayList, LinesField,
                                         MultiSelectionWidget, ReferenceField,
@@ -24,6 +25,7 @@ from Products.Archetypes.public import (DateTimeField, DisplayList, LinesField,
                                         TextAreaWidget, TextField,
                                         registerType)
 from Products.Archetypes.references import HoldingReference
+from Products.Archetypes.Widget import FileWidget
 from Products.ATExtensions.ateapi import RecordsField
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.utils import safe_unicode
@@ -155,7 +157,12 @@ schema = BikaFolderSchema.copy() + Schema((
             visible=False,
         ),
     ),
-
+    BlobField(
+        'Pdf',
+        widget=FileWidget(
+            visible=False,
+        ),
+    ),
     InheritedObjectsUIField(
         'InheritedObjectsUI',
         required=False,
