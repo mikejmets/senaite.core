@@ -394,3 +394,9 @@ div.row{
     width: 30%;
     border-collapse: collapse;
 }
+.no-padding{
+    margin: 0 !important;
+}
+p.no-padding{
+    margin: 0 !important;
+}

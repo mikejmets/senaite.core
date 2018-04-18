@@ -33,6 +33,7 @@ class BatchInvoiceView(BrowserView):
         self.rendered_items = []
         bc = getToolByName(self.context, 'bika_catalog')
         self.items = self.request.get('items', '')
+        self.invoice_id = 'Proforma'
         if self.items:
             self.items = [o.getObject() for o in bc(UID=self.items.split(","))]
         else:
@@ -89,6 +90,7 @@ class BatchInvoiceView(BrowserView):
         ars = self.context.getAnalysisRequests()
         invoice = invoice_batch.createInvoice(client_uid, ars)
         invoice.setAnalysisRequest(self)
+        self.invoice_id = invoice.getId()
         # Set the created invoice in the schema
         for ar in ars:
             ar.setInvoice(invoice)
@@ -97,7 +99,6 @@ class BatchInvoiceView(BrowserView):
         this_dir = os.path.dirname(os.path.abspath(__file__))
         templates_dir = os.path.join(this_dir, 'templates/')
         css = '%s%s.css' % (templates_dir, 'batch_pdf')
-        import pdb; pdb.set_trace()
         pdf_report = createPdf(invoice_pdf, False, css)
         self.context.setPdf(pdf_report)
         self.context.getPdf().setContentType('application/pdf')
