@@ -33,8 +33,6 @@ schema = BikaSchema.copy() + Schema((
     ),
     StringField('SMS',
     ),
-    StringField('COANR',
-    ),
     RecordsField('Recipients',
         type='recipients',
         subfields=('UID', 'Username', 'Fullname', 'EmailAddress',
@@ -64,7 +62,7 @@ class ARReport(BaseFolder):
     def Title(self):
         if len(self.getId()) == 0:
             return "COAReport has no ID"
-        coanr = self.getCOANR()
+        coanr = self.getId()
         arid = self.aq_parent.getId()
         if coanr:
             return "{coanr}".format(**locals())
@@ -73,7 +71,7 @@ class ARReport(BaseFolder):
     def Description(self):
         if len(self.getId()) == 0:
             return "COAReport has no ID"
-        coanr = self.getCOANR()
+        coanr = self.getId()
         arid = self.aq_parent.getId()
         if coanr:
             return "Certificate of Analysis: {coanr}".format(**locals())
