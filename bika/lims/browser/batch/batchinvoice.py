@@ -102,7 +102,9 @@ class BatchInvoiceView(BrowserView):
         pdf_report = createPdf(invoice_pdf, False, css)
         self.context.setPdf(pdf_report)
         self.context.getPdf().setContentType('application/pdf')
-        self.context.getPdf().setFilename("lunga.pdf")
+        self.context.getPdf().setFilename("{}.pdf".format(self.invoice_id))
+        redirect_url = '{}/batchinvoice'.format(self.context.absolute_url())
+        self.request.response.redirect(redirect_url)
         return
 
     def format_address(self, address):
