@@ -1,9 +1,10 @@
-
+@page {size: landscape}
 #lab-logo {
     float: right
 }
 #section-content{
     width: 100%;
+    font: 12px Arial, FreeSans, sans-serif
 }
 
 #section-content h1 { font-size:1.4em; }
@@ -380,6 +381,7 @@ div.row{
 }
 .empty{
     visibility: hidden !important;
+    border: 0 !important;
 }
 
 #invoice-info .table .row .td .empty{

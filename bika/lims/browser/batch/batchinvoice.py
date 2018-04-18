@@ -93,12 +93,11 @@ class BatchInvoiceView(BrowserView):
         for ar in ars:
             ar.setInvoice(invoice)
         invoice_pdf = self.pdf_template()
-        import pdb; pdb.set_trace()
         # content = ''
         this_dir = os.path.dirname(os.path.abspath(__file__))
         templates_dir = os.path.join(this_dir, 'templates/')
-        css = '%s%s.css' % (templates_dir, 'batch_invoice')
-        #pdf_report = createPdf(invoice_pdf, False, css)
+        css = '%s%s.css' % (templates_dir, 'batch_pdf')
+        import pdb; pdb.set_trace()
         pdf_report = createPdf(invoice_pdf, False, css)
         self.context.setPdf(pdf_report)
         self.context.getPdf().setContentType('application/pdf')
@@ -209,12 +208,12 @@ class BatchInvoiceView(BrowserView):
             total_price += float(ar['total_price'])
             discount_percentage = float(ar['discount_percentage'])
 
-        return {'subtotal': subtotal, # Without Discount and VAT
+        return {'subtotal': subtotal,  # Without Discount and VAT
                 'discount_percentage': discount_percentage,
                 'discount': discount,
                 'discounted_subtotal': discounted_subtotal,
-                'vat_amount': vat_amount, # VAT from Discount
-                'total_price': total_price, # With Discount and VAT
+                'vat_amount': vat_amount,  # VAT from Discount
+                'total_price': total_price,  # With Discount and VAT
                 }
 
     def ars_data(self):
@@ -259,12 +258,11 @@ class BatchInvoiceView(BrowserView):
             if profile.getUseAnalysisProfilePrice():
                 # We have to use the profiles price only
                 for pservice in profile.getService():
-                    pservices.append({
-                               'title': pservice.Title(),
-                               'price': None,
-                               'priceVat': None,
-                               'priceTotal': None,
-                               })
+                    pservices.append({'title': pservice.Title(),
+                                      'price': None,
+                                      'priceVat': None,
+                                      'priceTotal': None,
+                                      })
                 profiles.append({'name': profile.title,
                                  'price': profile.getAnalysisProfilePrice(),
                                  'priceVat': profile.getVATAmount(),
@@ -279,12 +277,11 @@ class BatchInvoiceView(BrowserView):
                     if panalysis == 0:
                         continue
                     else:
-                        pservices.append({
-                                     'title': pservice.Title(),
-                                     'price': panalysis.getPrice(),
-                                     'priceVat': "%.2f" % panalysis.getVATAmount(),
-                                     'priceTotal': "%.2f" % panalysis.getTotalPrice(),
-                                     })
+                        pservices.append({'title': pservice.Title(),
+                                          'price': panalysis.getPrice(),
+                                          'priceVat': "%.2f" % panalysis.getVATAmount(),
+                                          'priceTotal': "%.2f" % panalysis.getTotalPrice(),
+                                          })
                 profiles.append({'name': profile.title,
                                  'price': None,
                                  'priceVat': None,
@@ -302,7 +299,7 @@ class BatchInvoiceView(BrowserView):
         self.VATAmount = "%.2f" % ar.getVATAmount()
         self.totalPrice = "%.2f" % ar.getTotalPrice()
         self.discounted_subtotal = self.subtotal - self.discountAmount
-        #TODO: Check if an ar has been invoiced
+        # TODO: Check if an ar has been invoiced
         invoiced = False
         if ar.getInvoice():
             invoiced = True
@@ -310,32 +307,31 @@ class BatchInvoiceView(BrowserView):
         sample = ar.getSample()
         samplePoint = sample.getSamplePoint().Title() if sample.getSamplePoint() else ''
         sampleType = sample.getSampleType().Title()
-        date_received =  self.ulocalized_time(ar.getDateReceived(), long_format=1)
+        date_received = self.ulocalized_time(ar.getDateReceived(), long_format=1)
         if not date_received:
             date_received = 'Proforma'
-        date_published =  self.ulocalized_time(ar.getDatePublished(), long_format=1)
+        date_published = self.ulocalized_time(ar.getDatePublished(), long_format=1)
         if not date_published:
             date_published = 'Proforma'
-        adict = {
-                'sample': sample.Title(),
-                'ar': ar.id,
-                'sample_type': sampleType,
-                'sample_point': samplePoint,
-                'profile': '', #TODO: profile
-                'date_received': date_received,
-                'date_published': date_published,
+        adict = {'sample': sample.Title(),
+                 'ar': ar.id,
+                 'sample_type': sampleType,
+                 'sample_point': samplePoint,
+                 'profile': '',  # TODO: profile
+                 'date_received': date_received,
+                 'date_published': date_published,
 
-                'subtotal': self.subtotal,
-                'subtotal_vat_amount': self.subtotalVATAmount,
-                'subtotal_total_price': self.subtotalTotalPrice,
+                 'subtotal': self.subtotal,
+                 'subtotal_vat_amount': self.subtotalVATAmount,
+                 'subtotal_total_price': self.subtotalTotalPrice,
 
-                'discount_percentage': self.memberDiscount,
-                'discount': self.discountAmount,
-                'vat_amount': self.VATAmount,
-                'discounted_subtotal': self.discounted_subtotal,
-                'total_price': self.totalPrice,
+                 'discount_percentage': self.memberDiscount,
+                 'discount': self.discountAmount,
+                 'vat_amount': self.VATAmount,
+                 'discounted_subtotal': self.discounted_subtotal,
+                 'total_price': self.totalPrice,
 
-                'state': api.get_workflow_status_of(ar),
-                'invoiced': invoiced,
-                }
+                 'state': api.get_workflow_status_of(ar),
+                 'invoiced': invoiced,
+                 }
         return adict
