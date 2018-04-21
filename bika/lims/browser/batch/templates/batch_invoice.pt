@@ -20,7 +20,7 @@
         <p tal:condition="view/create_invoice">
             <a href="issue_invoice">Create Invoice</a>
         </p>
-        <p tal:condition="not:view/create_invoice">
+        <p tal:condition="view/downloadable">
             <a tal:attributes="href string:${context/absolute_url}/Pdf">Download</a>
         </p>
 	</metal:content-title>

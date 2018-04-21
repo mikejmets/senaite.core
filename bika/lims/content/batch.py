@@ -8,6 +8,7 @@
 from AccessControl import ClassSecurityInfo
 from bika.lims import bikaMessageFactory as _
 from bika.lims import deprecated
+from bika.lims import api
 from bika.lims.browser.widgets import RecordsWidget as bikaRecordsWidget
 from bika.lims.browser.widgets import DateTimeWidget, ReferenceWidget
 from bika.lims.catalog import CATALOG_ANALYSIS_REQUEST_LISTING
@@ -358,6 +359,18 @@ class Batch(ATFolder):
         """
         brains = self.getAnalysisRequestsBrains(**kwargs)
         return [b.getObject() for b in brains]
+
+    def isBatchInvoiceable(self, **kwargs):
+        """Return all the Analysis Requests objects linked to the Batch kargs
+        are passed directly to the catalog.
+        """
+        invoiceable = True
+        brains = self.getAnalysisRequestsBrains(**kwargs)
+        for brain in brains:
+            if api.get_workflow_status_of(brain) not in ['verified', 'published']:
+                invoiceable = False
+                break
+        return invoiceable
 
     def isOpen(self):
         """Returns true if the Batch is in 'open' state

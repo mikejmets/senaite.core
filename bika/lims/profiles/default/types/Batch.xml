@@ -126,7 +126,7 @@
  <action title="Batch Invoice"
          action_id="batchinvoice"
          category="object"
-         condition_expr=""
+         condition_expr="python: context.isBatchInvoiceable()"
          icon_expr="string:${portal_url}/++resource++bika.lims.images/batchbook.png"
          link_target=""
          url_expr="string:${object_url}/batchinvoice"

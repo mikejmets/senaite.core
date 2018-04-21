@@ -33,16 +33,21 @@ class BatchInvoiceView(BrowserView):
         self.rendered_items = []
         bc = getToolByName(self.context, 'bika_catalog')
         self.items = self.request.get('items', '')
-        self.invoice_id = 'Proforma'
+        self.invoice_id = 'Proforma (Not yet invoiced)'
         if self.items:
             self.items = [o.getObject() for o in bc(UID=self.items.split(","))]
         else:
             # TODO: Get all ARs that have not been invoiced on this batch
             self.items = self.context.getAnalysisRequests()
-        self.create_invoice = False if self.context.getPdf() else True
-        if not self.create_invoice:
-            # TODO: There should an invoice field on the batch
+        # self.create_invoice is True if there's no PDF
+        # Also make if True if one of the ARs is not verified
+        self.create_invoice = False
+        self.downloadable = True if self.context.getPdf() else False
+        if self.downloadable:
+            # All the ARs have the same invoice id on this batch
             self.invoice_id = self.items[0].getInvoice().getId()
+        if self.context.areAnalysisRequestsVerified() and self.downloadable == False:
+            self.create_invoice = True
 
         return self.template()
 
@@ -50,7 +55,9 @@ class BatchInvoiceView(BrowserView):
         """Issue invoice
         """
         # Create PDF of invoice from the view
-        self.create_invoice = True if len(self.ars_data()) > 0 else False
+        self.downloadable = True if self.context.getPdf() else False
+        if self.context.areAnalysisRequestsVerified() and self.downloadable == False:
+            self.create_invoice = True
 
         # check for an adhoc invoice batch for this month
         # noinspection PyCallingNonCallable
