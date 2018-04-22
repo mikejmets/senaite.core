@@ -100,12 +100,6 @@ class BatchInvoiceView(BrowserView):
         self.invoice_id = invoice.getId()
         invoice_pdf = self.pdf_template()
         # Set the created invoice in the schema
-        for ar in ars:
-            ar.setInvoice(invoice)
-            # import pdb; pdb.set_trace()
-            # ar.getInvoice().setPdf(invoice_pdf)
-            # ar.getInvoice().getPdf().setContentType('application/pdf')
-            # ar.getInvoice().getPdf().setFilename("{}.pdf".format(ar.getInvoice().getId()))
         # content = ''
         this_dir = os.path.dirname(os.path.abspath(__file__))
         templates_dir = os.path.join(this_dir, 'templates/')
@@ -114,6 +108,11 @@ class BatchInvoiceView(BrowserView):
         self.context.setPdf(pdf_report)
         self.context.getPdf().setContentType('application/pdf')
         self.context.getPdf().setFilename("{}.pdf".format(self.invoice_id))
+        for ar in ars:
+            ar.setInvoice(invoice)
+            ar.getInvoice().setPdf(pdf_report)
+            ar.getInvoice().getPdf().setContentType('application/pdf')
+            ar.getInvoice().getPdf().setFilename("{}.pdf".format(ar.getInvoice().getId()))
         redirect_url = '{}/batchinvoice'.format(self.context.absolute_url())
         self.request.response.redirect(redirect_url)
         return
