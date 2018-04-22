@@ -46,7 +46,7 @@ class BatchInvoiceView(BrowserView):
         if self.downloadable:
             # All the ARs have the same invoice id on this batch
             self.invoice_id = self.items[0].getInvoice().getId()
-        if self.context.areAnalysisRequestsVerified() and self.downloadable == False:
+        if self.context.isBatchInvoiceable() and self.downloadable == False:
             self.create_invoice = True
 
         return self.template()
@@ -56,7 +56,7 @@ class BatchInvoiceView(BrowserView):
         """
         # Create PDF of invoice from the view
         self.downloadable = True if self.context.getPdf() else False
-        if self.context.areAnalysisRequestsVerified() and self.downloadable == False:
+        if self.context.isBatchInvoiceable() and self.downloadable == False:
             self.create_invoice = True
 
         # check for an adhoc invoice batch for this month
@@ -98,10 +98,14 @@ class BatchInvoiceView(BrowserView):
         invoice = invoice_batch.createInvoice(client_uid, ars)
         invoice.setAnalysisRequest(self)
         self.invoice_id = invoice.getId()
+        invoice_pdf = self.pdf_template()
         # Set the created invoice in the schema
         for ar in ars:
             ar.setInvoice(invoice)
-        invoice_pdf = self.pdf_template()
+            # import pdb; pdb.set_trace()
+            # ar.getInvoice().setPdf(invoice_pdf)
+            # ar.getInvoice().getPdf().setContentType('application/pdf')
+            # ar.getInvoice().getPdf().setFilename("{}.pdf".format(ar.getInvoice().getId()))
         # content = ''
         this_dir = os.path.dirname(os.path.abspath(__file__))
         templates_dir = os.path.join(this_dir, 'templates/')
