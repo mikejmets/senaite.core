@@ -10,14 +10,22 @@ from bika.lims import bikaMessageFactory as _
 from bika.lims.browser import BrowserView
 from bika.lims.utils import to_utf8
 from bika.lims.permissions import *
+from bika.lims.interfaces import IAnalysisRequest
+from bika.lims.utils import createPdf, attachPdf
+from bika.lims.utils import t
+from bika.lims.utils import encode_header
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.utils import formataddr
 from DateTime import DateTime
 from Products.CMFCore.utils import getToolByName
+from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.CMFPlone.utils import _createObjectByType
 from decimal import Decimal
 
 import os
-from bika.lims.utils import createPdf
+import App
 
 
 class BatchInvoiceView(BrowserView):
@@ -46,7 +54,7 @@ class BatchInvoiceView(BrowserView):
         if self.downloadable:
             # All the ARs have the same invoice id on this batch
             self.invoice_id = self.items[0].getInvoice().getId()
-        if self.context.isBatchInvoiceable() and self.downloadable == False:
+        if self.context.isBatchInvoiceable() and self.downloadable is False:
             self.create_invoice = True
 
         return self.template()
@@ -56,7 +64,7 @@ class BatchInvoiceView(BrowserView):
         """
         # Create PDF of invoice from the view
         self.downloadable = True if self.context.getPdf() else False
-        if self.context.isBatchInvoiceable() and self.downloadable == False:
+        if self.context.isBatchInvoiceable() and self.downloadable is False:
             self.create_invoice = True
 
         # check for an adhoc invoice batch for this month
@@ -98,21 +106,26 @@ class BatchInvoiceView(BrowserView):
         invoice = invoice_batch.createInvoice(client_uid, ars)
         invoice.setAnalysisRequest(self)
         self.invoice_id = invoice.getId()
-        invoice_pdf = self.pdf_template()
+        invoice_html = self.pdf_template()
         # Set the created invoice in the schema
         # content = ''
         this_dir = os.path.dirname(os.path.abspath(__file__))
         templates_dir = os.path.join(this_dir, 'templates/')
         css = '%s%s.css' % (templates_dir, 'batch_pdf')
-        pdf_report = createPdf(invoice_pdf, False, css)
-        self.context.setPdf(pdf_report)
+        invoice_file = createPdf(invoice_html, False, css)
+        self.context.setPdf(invoice_file)
         self.context.getPdf().setContentType('application/pdf')
         self.context.getPdf().setFilename("{}.pdf".format(self.invoice_id))
         for ar in ars:
             ar.setInvoice(invoice)
-            ar.getInvoice().setPdf(pdf_report)
+            ar.getInvoice().setPdf(invoice_file)
             ar.getInvoice().getPdf().setContentType('application/pdf')
             ar.getInvoice().getPdf().setFilename("{}.pdf".format(ar.getInvoice().getId()))
+
+        # Email Invoice
+        invoice_id = self.invoice_id
+        self.emailInvoice(self.pdf_template(), invoice_file, invoice_id)
+
         redirect_url = '{}/batchinvoice'.format(self.context.absolute_url())
         self.request.response.redirect(redirect_url)
         return
@@ -348,3 +361,52 @@ class BatchInvoiceView(BrowserView):
                  'invoiced': invoiced,
                  }
         return adict
+
+    def emailInvoice(self, templateHTML, invoiceFile, invoiceId):
+        """
+        Send the invoice via email.
+        :param templateHTML: The invoice template in HTML, ready to be send.
+        :param invoice: An invoice object
+        """
+        to = []
+        ars = self.context.getAnalysisRequests()
+        ar = ars[0]
+        # SMTP errors are silently ignored if server is in debug mode
+        debug_mode = App.config.getConfiguration().debug_mode
+        # Useful variables
+        lab = ar.bika_setup.laboratory
+        # Compose and send email.
+        subject = t(_('Batch Invoice')) + ' ' + invoiceId
+        mime_msg = MIMEMultipart('related')
+        mime_msg['Subject'] = subject
+        mime_msg['From'] = formataddr(
+            (encode_header(lab.getName()), lab.getEmailAddress()))
+        mime_msg.preamble = 'This is a multi-part MIME message.'
+        msg_txt_t = MIMEText(templateHTML.encode('utf-8'), _subtype='html')
+        mime_msg.attach(msg_txt_t)
+        attachPdf(mime_msg, invoiceFile, invoiceId)
+
+        # Build the responsible's addresses
+        mngrs = ar.getResponsible()
+        for mngrid in mngrs['ids']:
+            name = mngrs['dict'][mngrid].get('name', '')
+            email = mngrs['dict'][mngrid].get('email', '')
+            if (email != ''):
+                to.append(formataddr((encode_header(name), email)))
+        # Build the client's address
+        caddress = ar.aq_parent.getEmailAddress()
+        cname = ar.aq_parent.getName()
+        if (caddress != ''):
+            to.append(formataddr((encode_header(cname), caddress)))
+        if len(to) > 0:
+            # Send the emails
+            mime_msg['To'] = ','.join(to)
+            try:
+                host = getToolByName(ar, 'MailHost')
+                host.send(mime_msg.as_string(), immediate=True)
+            except SMTPServerDisconnected as msg:
+                pass
+                if not debug_mode:
+                    raise SMTPServerDisconnected(msg)
+            except SMTPRecipientsRefused as msg:
+                raise WorkflowException(str(msg))

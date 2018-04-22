@@ -3,7 +3,9 @@
 	xmlns:metal="http://xml.zope.org/namespaces/metal"
 	xmlns:i18n="http://xml.zope.org/namespaces/i18n"
 	i18n:domain="bika">
-<head></head>
+<head>
+        <style tal:content='structure python:view.getReportStyle()'></style>
+</head>
 <body>
         <tal:report tal:define="portal_url  context/portal_url;
                                 client  view/client_data;
