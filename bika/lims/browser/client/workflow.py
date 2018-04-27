@@ -54,9 +54,12 @@ class ClientWorkflowAction(AnalysisRequestWorkflowAction):
                 self.request.response.redirect(self.destination_url)
                 return
 
-        if action == "sample":
+        # TODO: Move function to als.lims add-on
+        if action in ("sample", "receive"):
             objects = AnalysisRequestWorkflowAction._get_selected_items(self)
-            transitioned = {'to_be_preserved': [], 'sample_due': []}
+            transitioned = {'to_be_preserved': [],
+                            'sample_due': [],
+                            'sample_received': []}
             dsfn = 'getDateSampled'
             for obj_uid, obj in objects.items():
                 if obj.portal_type == "AnalysisRequest":
