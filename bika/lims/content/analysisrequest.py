@@ -1285,39 +1285,6 @@ schema = BikaSchema.copy() + Schema((
     ),
 
     BooleanField(
-        'ReportDryMatter',
-        default=False,
-        mode="rw",
-        read_permission=permissions.View,
-        write_permission=permissions.ModifyPortalContent,
-        widget=BooleanWidget(
-            label=_("Report as Dry Matter"),
-            render_own_label=True,
-            description=_("These results can be reported as dry matter"),
-            visible={
-                'edit': 'visible',
-                'view': 'visible',
-                'add': 'edit',
-                'header_table': 'visible',
-                'sample_registered': {'view': 'visible', 'edit': 'visible', 'add': 'edit'},
-                'to_be_sampled': {'view': 'visible', 'edit': 'visible'},
-                'scheduled_sampling': {'view': 'visible', 'edit': 'visible'},
-                'sampled': {'view': 'visible', 'edit': 'visible'},
-                'to_be_preserved': {'view': 'visible', 'edit': 'visible'},
-                'sample_due': {'view': 'visible', 'edit': 'visible'},
-                'sample_prep': {'view': 'visible', 'edit': 'invisible'},
-                'sample_received': {'view': 'visible', 'edit': 'visible'},
-                'attachment_due': {'view': 'visible', 'edit': 'visible'},
-                'to_be_verified': {'view': 'visible', 'edit': 'visible'},
-                'verified': {'view': 'visible', 'edit': 'invisible'},
-                'published': {'view': 'visible', 'edit': 'invisible'},
-                'invalid': {'view': 'visible', 'edit': 'invisible'},
-                'rejected': {'view': 'visible', 'edit': 'invisible'},
-            },
-        ),
-    ),
-
-    BooleanField(
         'InvoiceExclude',
         default=False,
         mode="rw",
@@ -1976,12 +1943,15 @@ class AnalysisRequest(BaseFolder):
         an_nums = [0,0,0,0]
         for analysis in self.getAnalyses():
             review_state = analysis.review_state
-            analysis_object = analysis.getObject()
-            if review_state in ['retracted', 'rejected'] or \
-                    not isActive(analysis_object):
-                # Discard retracted analyses and non-active analyses
+            if review_state in ['retracted', 'rejected']:
+                # Discard retracted analyses
                 continue
 
+            if not api.is_active(analysis):
+                # Discard non-active analyses
+                continue
+
+            analysis_object = api.get_object(analysis)
             actions = getReviewHistoryActionsList(analysis_object)
             if 'verify' in actions:
                 # Assume the "last" state of analysis is verified
