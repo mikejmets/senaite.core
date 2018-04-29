@@ -5,7 +5,6 @@
 # Copyright 2018 by it's authors.
 # Some rights reserved. See LICENSE.rst, CONTRIBUTORS.rst.
 
-import json
 from datetime import datetime
 from operator import itemgetter
 

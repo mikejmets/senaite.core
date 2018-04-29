@@ -1,0 +1,265 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:tal="http://xml.zope.org/namespaces/tal"
+	xmlns:metal="http://xml.zope.org/namespaces/metal"
+	xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+	metal:use-macro="here/main_template/macros/master"
+	i18n:domain="bika">
+<body>
+    <metal:block fill-slot="style_slot">
+        <style tal:content='structure python:view.getReportStyle()'></style>
+    </metal:block>
+
+	<metal:content-title fill-slot="content-title">
+		<h1>
+			<img tal:condition="view/icon | nothing"
+				 src="" tal:attributes="src view/icon"/>
+        <img tal:condition="view/getPriorityIcon | nothing"
+             src="" tal:attributes="src view/getPriorityIcon"/>
+			<span class="documentFirstHeading" tal:content="view/title"/>
+		</h1>
+        <p tal:condition="view/create_invoice">
+            <a href="issue_invoice">Create Invoice</a>
+        </p>
+        <p tal:condition="view/downloadable">
+            <a tal:attributes="href string:${context/absolute_url}/Pdf">Download</a>
+        </p>
+	</metal:content-title>
+
+	<metal:content-description fill-slot="content-description">
+		<div class="documentDescription"
+			tal:content="view/description"
+			tal:condition="view/description"/>
+	</metal:content-description>
+
+	<metal:content-core fill-slot="content-core">
+        <tal:report tal:define="portal_url  context/portal_url;
+                                client  view/client_data;
+                                lab     view/lab_data;">
+
+          <!-- Header -->
+            <div id="section-content" class="page-header">
+                <!-- Logo -->
+                <div id="lab-logo">
+                  <a tal:attributes="href portal_url">
+                    <img tal:attributes="src string:${portal_url}/logo.png"/>
+                  </a>
+                  <p></p>
+                </div>
+                <!-- Logo  end -->
+
+                <!-- Client Info -->
+                <!-- Address and Lab info -->
+                <div id="section-info">
+                    <!-- Start of table -->
+                    <div class="table">
+                        <!-- Start of row -->
+                        <div class="row">
+                            <!-- Start of td -->
+                            <div class="td fifty_percent td_vertical_align">
+                                <!-- Start of table -->
+                                <div class="table table_header" >
+                                    <div class="row">
+                                      <div class="td">
+                                        <a tal:content="client/name"
+                                           tal:attributes="href string:${client/url}">To be confirmed</a>
+                                      </div>
+                                    </div>
+                                    <div class="row">
+                                      <div class="td" tal:content="structure client/address">To be confirmed</div>
+                                    </div>
+                                    <div class="row">
+                                      <div class="td">&nbsp</div>
+                                    </div>
+                                    <div class="row">
+                                      <div class="td" tal:content="client/vat">To be confirmed</div>
+                                    </div>
+                                    <div class="row">
+                                      <div class="td"></div>
+                                    </div>
+                                    <div class="row">
+                                      <div class="td">&nbsp</div>
+                                    </div>
+                                    <div class="row">
+                                      <div class="td">&nbsp</div>
+                                    </div>
+                                    <div class="row">
+                                      <div class="td" tal:content="client/phone">To be confirmed</div>
+                                    </div>
+                                    <div class="row">
+                                      <div class="td" tal:content="client/email">To be confirmed</div>
+                                    </div>
+                                </div>
+                                <!-- End of table -->
+                            </div>
+                            <!-- End of td -->
+                            <!-- Start of td -->
+                            <div class="td fifty_percent" style="text-align:right">
+                                <!-- Start of table -->
+                                <div class="table" style="text-align:right">
+                                    <div class="row">
+                                      <div class="td">
+                                        <a tal:content="lab/name"
+                                           tal:attributes="href string:${lab/url}">To be confirmed</a>
+                                       </div>
+                                    </div>
+                                    <div class="row">
+                                      <div class="td" tal:content="structure lab/address">To be confirmed</div>
+                                    </div>
+                                    <div class="row">
+                                      <div class="td">&nbsp</div>
+                                    </div>
+                                    <div class="row">
+                                      <div class="td" tal:content="lab/vat">To be confirmed</div>
+                                    </div>
+                                    <div class="row">
+                                      <div class="td">&nbsp</div>
+                                    </div>
+                                    <div class="row">
+                                      <div class="td">&nbsp</div>
+                                    </div>
+                                    <div class="row">
+                                      <div class="td" tal:content="lab/phone">To be confirmed</div>
+                                    </div>
+                                    <div class="row">
+                                      <div class="td" tal:content="lab/email">To be confirmed</div>
+                                    </div>
+                                </div>
+                                <!-- End of table -->
+                            </div>
+                            <!-- End of td -->
+                        </div>
+                        <!-- End of row -->
+                    </div>
+                    <!-- End of table -->
+                </div>
+                <!-- End of section-info -->
+
+                <div id="tax-info">
+                    <h1>Tax Invoice</h1>
+                    <p></p>
+                    <p>Invoice
+                        <a tal:condition="not:view/create_invoice"
+                           tal:attributes="href string:${context/absolute_url}/Pdf"
+                           tal:content="view/invoice_id">
+                        </a>
+                    </p>
+                    <p>Batch <span tal:content="context/id"/>,
+                        <a tal:content="context/ClientBatchID"
+                           tal:attributes="href client/url"/>
+                    </p>
+                </div>
+                <div id="invoice-info" tal:define="ars_data view/ars_data;
+                                                   totals   view/totals">
+                    <div class="table" style="width:100%">
+                        <div class="row" style="width:100% !important">
+                          <div class="td">Item</div>
+                          <div class="td">Analysis Request</div>
+                          <div class="td">Sample</div>
+                          <div class="td">Sample Type</div>
+                          <div class="td">Sample Point</div>
+                          <div class="td">Profile</div>
+                          <div class="td">Date Received</div>
+                          <div class="td">Date Published</div>
+                          <div class="td">Price</div>
+                        </div>
+                        <tal:trows tal:repeat="ar ars_data;">
+                            <div class="row" style="width:100% !important">
+                              <div class="td" tal:content="repeat/ar/number">1</div>
+                              <div class="td" tal:content="ar/ar"/>
+                              <div class="td" tal:content="ar/sample"/>
+                              <div class="td" tal:content="ar/sample_type"/>
+                              <div class="td" tal:content="ar/sample_point"/>
+                              <div class="td" tal:content="ar/profile"/>
+                              <div class="td" tal:content="ar/date_received"/>
+                              <div class="td" tal:content="ar/date_published"/>
+                              <div class="td" tal:content="ar/subtotal"/>
+                            </div>
+                        </tal:trows>
+                        <div class="row">
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td" style="text-align:right">Subtotal</div>
+                              <div class="td" tal:content="totals/subtotal">1</div>
+                        </div>
+                        <div class="row">
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td" style="text-align:right">
+                                  Discount (<span tal:content="string:${totals/discount_percentage}%"/>)
+                              </div>
+                              <div class="td" tal:content="totals/discount">1</div>
+                        </div>
+                        <div class="row">
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td" style="text-align:right">Subtotal</div>
+                              <div class="td" tal:content="totals/discounted_subtotal">1</div>
+                        </div>
+                        <div class="row">
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td" style="text-align:right">Vat</div>
+                              <div class="td" tal:content="totals/vat_amount">1</div>
+                        </div>
+                        <div class="row">
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td empty"></div>
+                              <div class="td" style="text-align:right">Total</div>
+                              <div class="td" tal:content="totals/total_price">1</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Client Info end -->
+
+          </div>
+          <!-- Header end -->
+            <p style="page-break-before: always" ></p>
+            <h3>Bank Information</h3>
+            <div class="table bank-info">
+                <div class="row">
+                  <div class="td">Account holder:</div>
+                  <div class="td" tal:content="lab/bank_account_holder"></div>
+                </div>
+                <div class="row">
+                  <div class="td">Bank</div>
+                  <div class="td" tal:content="lab/bank_name"></div>
+                </div>
+                <div class="row">
+                  <div class="td">Branch</div>
+                  <div class="td" tal:content="lab/bank_branch"></div>
+                </div>
+                <div class="row">
+                  <div class="td">Account number:</div>
+                  <div class="td" tal:content="lab/bank_account_number"></div>
+                </div>
+            </div>
+        </tal:report>
+    </metal:content-core>
+
+	</body>
+</html>

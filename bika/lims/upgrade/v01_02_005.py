@@ -32,6 +32,8 @@ def upgrade(tool):
     logger.info("Upgrading {0}: {1} -> {2}".format(product, ver_from, version))
 
     # -------- ADD YOUR STUFF HERE --------
+    setup = portal.portal_setup
+    setup.runImportStepFromProfile('profile-bika.lims:default', 'typeinfo')
 
     # Lab Managers can not remove Analyses in "Manage Analyses" form
     fix_permission_on_analysisrequests()

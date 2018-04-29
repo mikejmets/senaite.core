@@ -18,6 +18,9 @@
 		<div class="documentDescription"
 			tal:content="view/description"
 			tal:condition="view/description"/>
+		<div tal:condition="python:view.invoice_url_download">
+            <a tal:attributes="href view/invoice_url_download">Download</a>
+        </div>
 	</metal:content-description>
 
 	<metal:content-core fill-slot="content-core">

@@ -41,6 +41,8 @@ Changelog
 
 **Added**
 
+# Added Instrument: LaChat QuickChem FIA
+- # Added Instrument: Varian Vista-PRO ICP
 - #741 CSV Importer for 'Cobas Taqman 48' Instrument Interface
 - #737 Added Instrument: Metler Toledo DL55
 - #730 Added Instrument: LaChat QuickChem FIA

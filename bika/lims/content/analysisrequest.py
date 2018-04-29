@@ -3113,5 +3113,4 @@ class AnalysisRequest(BaseFolder):
                 earliest = date
         return earliest
 
-
 registerType(AnalysisRequest, PROJECTNAME)

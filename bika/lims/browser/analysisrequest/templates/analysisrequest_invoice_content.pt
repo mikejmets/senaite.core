@@ -1,3 +1,11 @@
+<div id="lab-logo" class="div-table-right">
+  <a tal:attributes="href view/portal_url">
+    <img tal:attributes="src string:${view/portal_url}/logo_print.png"/>
+  </a>
+</div>
+<br />
+<br />
+<br />
 <div summary="Invoice Info">
     <!-- Div Styled Table -->
     <div class="div-table-first-row">
