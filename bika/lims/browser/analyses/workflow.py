@@ -151,7 +151,7 @@ class AnalysesWorkflowAction(WorkflowAction):
                     submitted = True
                     if IRequestAnalysis.providedBy(analysis):
                         # Store the AR uids to be reindexed later.
-                        affected_ars.add(brain.getParentUID )
+                        affected_ars.add(brain.getParentUID)
 
                     if brain.worksheetanalysis_review_state == 'assigned':
                         worksheet_uid = analysis.getWorksheetUID()
@@ -215,7 +215,7 @@ class AnalysesWorkflowAction(WorkflowAction):
         # AR Catalog contains some metadata that that rely on the Analyses an
         # Analysis Request contains.
         if affected_ars:
-            query = dict(UID=affected_ars, portal_type="AnalysisRequest")
+            query = dict(UID=list(affected_ars), portal_type="AnalysisRequest")
             for ar_brain in api.search(query, CATALOG_ANALYSIS_REQUEST_LISTING):
                 if ar_brain.review_state == 'to_be_verified':
                     continue
@@ -239,4 +239,3 @@ class AnalysesWorkflowAction(WorkflowAction):
         self.destination_url = self.request.get_header("referer",
                                                        self.context.absolute_url())
         self.request.response.redirect(self.destination_url)
-
