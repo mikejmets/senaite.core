@@ -7,6 +7,7 @@
 
 import json
 from datetime import datetime
+from collections import OrderedDict
 
 import magnitude
 from BTrees.OOBTree import OOBTree
@@ -130,12 +131,6 @@ class AnalysisRequestAddView(BrowserView):
         """
         bika_setup = api.get_bika_setup()
         return bika_setup.getEnableARSpecs()
-
-    def get_drymatter_service(self):
-        """The analysis to be used for determining dry matter
-        """
-        bika_setup = api.get_bika_setup()
-        return bika_setup.getDryMatterService()
 
     def get_ar_count(self):
         """Return the ar_count request paramteter
@@ -275,7 +270,7 @@ class AnalysisRequestAddView(BrowserView):
         logger.info("get_copy_from: uids={}".format(copy_from_uids))
         return out
 
-    def get_default_value(self, field, context):
+    def get_default_value(self, field, context, arnum):
         """Get the default value of the field
         """
         name = field.getName()
@@ -288,7 +283,8 @@ class AnalysisRequestAddView(BrowserView):
             client = self.get_client()
             if client is not None:
                 default = client
-        if name == "Contact":
+        # only set default contact for first column
+        if name == "Contact" and arnum == 0:
             contact = self.get_default_contact()
             if contact is not None:
                 default = contact
@@ -323,8 +319,8 @@ class AnalysisRequestAddView(BrowserView):
             interface=IGetDefaultFieldValueARAddHook)
         if adapter is not None:
             default = adapter(self.context)
-        logger.info("get_default_value: context={} field={} value={}".format(
-            context, name, default))
+        logger.info("get_default_value: context={} field={} value={} arnum={}"
+                    .format(context, name, default, arnum))
         return default
 
     def get_field_value(self, field, context):
@@ -443,14 +439,14 @@ class AnalysisRequestAddView(BrowserView):
                     value = self.get_field_value(field, context)
                 else:
                     # get the default value of this field
-                    value = self.get_default_value(field, ar_context)
+                    value = self.get_default_value(field, ar_context, arnum=arnum)
                 # store the value on the new fieldname
                 new_fieldname = self.get_fieldname(field, arnum)
                 out[new_fieldname] = value
 
         return out
 
-    def get_default_contact(self):
+    def get_default_contact(self, client=None):
         """Logic refactored from JavaScript:
 
         * If client only has one contact, and the analysis request comes from
@@ -462,7 +458,7 @@ class AnalysisRequestAddView(BrowserView):
         :rtype: Client object or None
         """
         catalog = api.get_tool("portal_catalog")
-        client = self.get_client()
+        client = client or self.get_client()
         path = api.get_path(self.context)
         if client:
             path = api.get_path(client)
@@ -974,7 +970,15 @@ class ajaxAnalysisRequestAddView(AnalysisRequestAddView):
         """Returns the client info of an object
         """
         info = self.get_base_info(obj)
-        info.update({})
+
+        default_contact_info = {}
+        default_contact = self.get_default_contact(client=obj)
+        if default_contact:
+            default_contact_info = self.get_contact_info(default_contact)
+
+        info.update({
+            "default_contact": default_contact_info
+        })
 
         # UID of the client
         uid = api.get_uid(obj)
@@ -1071,7 +1075,6 @@ class ajaxAnalysisRequestAddView(AnalysisRequestAddView):
             "short_title": obj.getShortTitle(),
             "scientific_name": obj.getScientificName(),
             "unit": obj.getUnit(),
-            "report_dry_matter": obj.getReportDryMatter(),
             "keyword": obj.getKeyword(),
             "methods": map(self.get_method_info, obj.getMethods()),
             "calculation": self.get_calculation_info(obj.getCalculation()),
@@ -1126,7 +1129,6 @@ class ajaxAnalysisRequestAddView(AnalysisRequestAddView):
             "composite": obj.getComposite(),
             "partitions": obj.getPartitions(),
             "remarks": obj.getRemarks(),
-            "report_dry_matter": obj.getReportDryMatter(),
             "sample_point_title": sample_point_title,
             "sample_point_uid": sample_point_uid,
             "sample_type_title": sample_type_title,
@@ -1432,12 +1434,6 @@ class ajaxAnalysisRequestAddView(AnalysisRequestAddView):
             sample_metadata = {}
             # Mapping of sampletype UID -> sampletype object info
             sampletype_metadata = {}
-            # Mapping of drymatter UID -> drymatter service info
-            dms_metadata = {}
-            # Mapping of drymatter service (dms) -> list of dependent services
-            dms_to_services = {}
-            # Mapping of dependent services -> drymatter service (dms)
-            service_to_dms = {}
             # Mapping of specification UID -> specification object info
             specification_metadata = {}
             # Mapping of specification UID -> list of service UIDs
@@ -1509,9 +1505,6 @@ class ajaxAnalysisRequestAddView(AnalysisRequestAddView):
                 # remember the template metadata
                 template_metadata[uid] = metadata
 
-                # XXX notify below to include the drymatter service as well
-                record["ReportDryMatter"] = obj.getReportDryMatter()
-
                 # profile from the template
                 profile = obj.getAnalysisProfile()
                 # add the profile to the other profiles
@@ -1536,31 +1529,6 @@ class ajaxAnalysisRequestAddView(AnalysisRequestAddView):
                         service_to_templates[service_uid].append(uid)
                     else:
                         service_to_templates[service_uid] = [uid]
-
-            # DRY MATTER
-            dms = self.get_drymatter_service()
-            if dms and record.get("ReportDryMatter"):
-                # get the UID of the drymatter service
-                dms_uid = api.get_uid(dms)
-                # get the drymatter metadata
-                metadata = self.get_service_info(dms)
-                # remember the metadata of the drymatter service
-                dms_metadata[dms_uid] = metadata
-                # add the drymatter service to the service collection (processed later)
-                _services[dms_uid] = dms
-                # get the dependencies of the drymatter service
-                dms_deps = self.get_calculation_dependencies_for(dms)
-                # add the drymatter service dependencies to the service collection (processed later)
-                _services.update(dms_deps)
-                # remember a mapping of dms uid -> services
-                dms_to_services[dms_uid] = dms_deps.keys() + [dms_uid]
-                # remember a mapping of dms dependency uid -> dms
-                service_to_dms[dms_uid] = [dms_uid]
-                for dep_uid, dep in dms_deps.iteritems():
-                    if dep_uid in service_to_dms:
-                        service_to_dms[dep_uid].append(dms_uid)
-                    else:
-                        service_to_dms[dep_uid] = [dms_uid]
 
             # PROFILES
             for uid, obj in _profiles.iteritems():
@@ -1643,9 +1611,6 @@ class ajaxAnalysisRequestAddView(AnalysisRequestAddView):
                 "contact_metadata": contact_metadata,
                 "sample_metadata": sample_metadata,
                 "sampletype_metadata": sampletype_metadata,
-                "dms_metadata": dms_metadata,
-                "dms_to_services": dms_to_services,
-                "service_to_dms": service_to_dms,
                 "specification_metadata": specification_metadata,
                 "specification_to_services": specification_to_services,
                 "service_to_specifications": service_to_specifications,
@@ -1922,6 +1887,48 @@ class ajaxAnalysisRequestAddView(AnalysisRequestAddView):
             else:
                 message = _('Analysis request ${AR} was successfully created.',
                         mapping={'AR': safe_unicode(ARs[0])})
+        # ARs = OrderedDict()
+        # for n, record in enumerate(valid_records):
+        #     client_uid = record.get("Client")
+        #     client = self.get_object_by_uid(client_uid)
+
+        #     if not client:
+        #         raise RuntimeError("No client found")
+
+        #     # get the specifications and pass them directly to the AR create function.
+        #     specifications = record.pop("Specifications", {})
+
+        #     # Create the Analysis Request
+        #     try:
+        #         ar = crar(client, self.request, record, specifications=specifications)
+        #     except (KeyError, RuntimeError) as e:
+        #         errors["message"] = e.message
+        #         return {"errors": errors}
+        #     # We keep the title to check if AR is newly created
+        #     # and UID to print stickers
+        #     ARs[ar.Title()] = ar.UID()
+
+        #     _attachments = []
+        #     for attachment in attachments.get(n, []):
+        #         if not attachment.filename:
+        #             continue
+        #         att = _createObjectByType("Attachment", self.context, tmpID())
+        #         att.setAttachmentFile(attachment)
+        #         att.processForm()
+        #         _attachments.append(att)
+        #     if _attachments:
+        #         ar.setAttachment(_attachments)
+
+        # level = "info"
+        # if len(ARs) == 0:
+        #     message = _('No Analysis Requests could be created.')
+        #     level = "error"
+        # elif len(ARs) > 1:
+        #     message = _('Analysis requests ${ARs} were successfully created.',
+        #                 mapping={'ARs': safe_unicode(', '.join(ARs.keys()))})
+        # else:
+        #     message = _('Analysis request ${AR} was successfully created.',
+        #                 mapping={'AR': safe_unicode(ARs.keys()[0])})
 
         else:
             path = [i for i in self.context.getPhysicalPath()]
@@ -1951,12 +1958,11 @@ class ajaxAnalysisRequestAddView(AnalysisRequestAddView):
 
         # Display a portal message
         self.context.plone_utils.addPortalMessage(message, level)
-
         # Automatic label printing won't print "register" labels for Secondary. ARs
         auto_print = bika_setup.getAutoPrintStickers()
 
         # https://github.com/bikalabs/bika.lims/pull/2153
-        new_ars = [] #[a for a in ARs if a[-1] == '1']
+        new_ars = []  # [a for a in ARs if a[-1] == '1']
 
         if 'register' in auto_print and new_ars:
             return {

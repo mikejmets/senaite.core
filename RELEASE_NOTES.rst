@@ -1,6 +1,29 @@
 Release notes
 =============
 
+Update from 1.2.4 to 1.2.5
+--------------------------
+
+- This update requires the execution of `bin/buildout`, because
+  Products.TextIndexNG3 has been added. It will help to search by wildcards in
+  TextIndexNG3 indexes instead of looking for the keyword inside wildcards.
+  For now, it is used only in AR listing catalog.
+  https://pypi.python.org/pypi/Products.TextIndexNG3/
+
+- This update might take long depending on the number of Analyses registered in
+  the system, because the upgrade step will walk through all analyses in order
+  to update those that do not have a valid (non-floatable) duplicate variation
+  value (see #768).
+
+
+Update from 1.2.3 to 1.2.4
+--------------------------
+
+- This update requires the execution of `bin/buildout`, because WeasyPrint has
+  been updated to version 0.42.2:
+  http://weasyprint.readthedocs.io/en/stable/changelog.html#version-0-42-2
+
+
 Update from 1.2.2 to 1.2.3
 --------------------------
 
