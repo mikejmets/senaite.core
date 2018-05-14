@@ -204,22 +204,6 @@ class Worksheet(BaseFolder, HistoryAwareMixin):
 
         doActionFor(analysis, 'assign', queue_it=True)
 
-        # If a dependency of DryMatter service is added here, we need to
-        # make sure that the dry matter analysis itself is also
-        # present.  Otherwise WS calculations refer to the DB version
-        # of the DM analysis, which is out of sync with the form.
-        dms = self.bika_setup.getDryMatterService()
-        if dms:
-            dmk = dms.getKeyword()
-            deps = analysis.getDependents()
-            # if dry matter service in my dependents:
-            if dmk in [a.getKeyword() for a in deps]:
-                # get dry matter analysis from AR
-                dma = analysis.aq_parent.getAnalyses(getKeyword=dmk,
-                                                     full_objects=True)[0]
-                # add it.
-                if dma not in self.getAnalyses():
-                    self.addAnalysis(dma)
         # Reindex the worksheet in order to update its columns
         self.reindexObject()
         analysis.reindexObject(idxs=['getWorksheetUID', ])
@@ -506,7 +490,7 @@ class Worksheet(BaseFolder, HistoryAwareMixin):
         layout = self.getLayout()
         dup_pos = {'position': destination_slot,
                    'type': 'd',
-                   'container_uid': duplicate.getRequestID(),
+                   'container_uid': duplicate.getRequestUID(),
                    'analysis_uid': api.get_uid(duplicate)}
         layout.append(dup_pos)
         self.setLayout(layout)
@@ -975,14 +959,14 @@ class Worksheet(BaseFolder, HistoryAwareMixin):
             # Since no service filtering has been defined, there is no need to
             # look for the best choice. Return the first one
             sample = reference_samples[0]
-            spec_uids = sample.getResultsRangeDict().keys()
+            spec_uids = sample.getSupportedServices(only_uids=True)
             return sample, spec_uids
 
         best_score = [0, 0]
         best_sample = None
         best_supported = None
         for sample in reference_samples:
-            specs_uids = sample.getResultsRangeDict().keys()
+            specs_uids = sample.getSupportedServices(only_uids=True)
             supported = [uid for uid in specs_uids if uid in service_uids]
             matches = len(supported)
             overlays = len(service_uids) - matches

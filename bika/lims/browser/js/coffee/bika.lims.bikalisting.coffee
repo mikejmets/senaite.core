@@ -342,7 +342,7 @@ class window.BikaListingTableView
     url = cat_url or base_url
 
     # prepare a new form data
-    form_data = new FormData()
+    form_data = new FormData form[0]
     form_data.set "cat", cat_id
     form_data.set "form_id", form_id
     form_data.set "ajax_category_expand", 1
@@ -380,6 +380,7 @@ class window.BikaListingTableView
     form_data.set "#{form_id}_review_state", state_id
 
     @ajax_submit
+      url: @get_base_url()
       data: form_data
       processData: no  # do not transform to a query string
       contentType: no # do not set any content type header
@@ -589,16 +590,16 @@ class window.BikaListingTableView
       button = self.make_wf_button transition, url, value
       $(wf_buttons).append button
 
-    # Add now custom actions
-    if $(checked).length > 0
-      custom_transitions = $(table).find("input[type='hidden'].custom_transition")
+    # Always add custom transitions
+    # https://github.com/senaite/senaite.core/issues/708
+    custom_transitions = $(table).find("input[type='hidden'].custom_transition")
 
-      $.each custom_transitions, (index, element) ->
-        transition = $(element).val()
-        url = $(element).attr "url"
-        value = $(element).attr "title"
-        button = self.make_wf_button transition, url, value
-        $(wf_buttons).append button
+    $.each custom_transitions, (index, element) ->
+      transition = $(element).val()
+      url = $(element).attr "url"
+      value = $(element).attr "title"
+      button = self.make_wf_button transition, url, value
+      $(wf_buttons).append button
 
 
   make_wf_button: (transition, url, value) ->

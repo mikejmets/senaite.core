@@ -20,6 +20,7 @@ from AccessControl import allow_module
 from AccessControl import getSecurityManager
 from DateTime import DateTime
 from Products.Archetypes.public import DisplayList
+from Products.Archetypes.interfaces.field import IComputedField
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.utils import safe_unicode
 from bika.lims import api as api
@@ -143,16 +144,10 @@ def getUsers(context, roles, allow_empty=True):
 def isActive(obj):
     """ Check if obj is inactive or cancelled.
     """
-    wf = getToolByName(obj, 'portal_workflow')
-    if (hasattr(obj, 'inactive_state') and
-       obj.inactive_state == 'inactive') or \
-       wf.getInfoFor(obj, 'inactive_state', 'active') == 'inactive':
-        return False
-    if (hasattr(obj, 'cancellation_state') and
-       obj.inactive_state == 'cancelled') or \
-       wf.getInfoFor(obj, 'cancellation_state', 'active') == 'cancelled':
-        return False
-    return True
+    # The import is performed here because if placed
+    # at the beginning of the file we get circular imports
+    from bika.lims.workflow import isActive as is_active
+    return is_active(obj)
 
 
 def formatDateQuery(context, date_id):
@@ -389,11 +384,7 @@ def tmpID():
 
 
 def isnumber(s):
-    try:
-        float(s)
-        return True
-    except ValueError:
-        return False
+    return api.is_floatable(s)
 
 
 def senaite_url_fetcher(url):
@@ -769,6 +760,8 @@ def copy_field_values(src, dst, ignore_fieldnames=None,
     dst_schema = dst.Schema()
 
     for field in src_schema.fields():
+        if IComputedField.providedBy(field):
+            continue
         fieldname = field.getName()
         if fieldname in ignore_fields \
                 or field.type in ignore_types \

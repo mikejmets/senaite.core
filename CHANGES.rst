@@ -1,7 +1,7 @@
 Changelog
 =========
 
-1.2.4 (unreleased)
+1.2.6 (unreleased)
 ------------------
 
 **Added**
@@ -15,10 +15,103 @@ Changelog
 
 **Fixed**
 
-- #698 Fix Publish Actions for Batches
-- #696 Filter worksheets by department. The worksheet count in the dashboard is now properly updated accordingly to the selected departments
 
 **Security**
+
+
+1.2.5 (2018-05-05)
+------------------
+
+**Added**
+
+- #777 Delay option for searches in reference widget combos
+- #806 Include Client ID when setting up ARReport on the IDServer
+
+**Changed**
+
+- #815 Change description and title of the invalidation notification option
+
+**Removed**
+
+- #811 Remove senaite.api import in printform
+- #807 Remove "queued_ars" JS call to avoid 404
+- #800 Remove Dry Matter from tests
+- #779 Remove Dry Matter functionality
+
+**Fixed**
+
+- #813 Saving AR results gives TypeError: can only compare to a set
+- #799 On AR Listing, edit for Date Sampled not working when Sampler has a value
+- #776 Analyses submission in Worksheet is slow
+- #726 404 Error raised when clicking Print Samples Sheets from within a client
+- #802 Remove Dry Matter remainders
+- #781 Delete Permission on ARs for Lab Managers
+- #784 Fix workflow state filter not kept when expanding categories in AS listing
+- #786 Fix inactive services listed in AR "Manage Analyses" forms
+- #775 Analyses on Analysis Requests are hyperlinked to their Worksheets
+- #769 Traceback when submitting duplicate when Duplicate Variation is not set
+- #771 Slow Searches in Listing Views
+- #774 When retracting an Analysis Requests its analyses are also retracted
+- #772 Improved UID check in API
+
+
+1.2.4 (2018-04-06)
+------------------
+
+**Added**
+
+- #741 CSV Importer for 'Cobas Taqman 48' Instrument Interface
+- #737 Added Instrument: Metler Toledo DL55
+- #730 Added Instrument: LaChat QuickChem FIA
+- #729 Added Instrument: Varian Vista-PRO ICP
+- #694 Added "Warn Min" and "Warn Max" subfields in Analysis Specifications
+- #710 Added more builtin functions for Calculations
+
+**Changed**
+
+- #765 Department Filtering Improvements
+- #746 StringField to UIDReferenceField for Default Department of Lab Contact
+- #744 Updated WeasyPrint to 0.42.2
+- #694 Out of range/shoulders logic redux, ported to `api.analysis`
+- #694 Make getResultRange functions from Analysis-types consistent
+- #694 Out of range/shoulders icons are rendered in AnalysesView
+
+**Removed**
+
+- #694 Removal of "Permitted % Error" subfield in Analysis Specifications
+- #694 Removal of Adapters for out of range icons
+
+**Fixed**
+
+- #763 Datetime conversion error in CSV Importer of Taqman 48
+- #761 Dormant Reference Definitions were listed for selection on WS Templates
+- #735 Interim fields not created for QC Analyses on WSs
+- #752 Published Date field of Analyses is never set
+- #760 Default to empty the Title field when creating a new Analysis Specification
+- #759 Date error in invoice batch creation although End date is after Start date
+- #743 Traceback when accessing the view of a Statement
+- #734 Chameleon parse error in productivity reports
+- #750 Wrong redirect after Batch Label edit or creation
+- #721 Fix filter functionality of Worksheets after sort/pagination
+- #738 Traceback when Invalidating Analysis Requests
+- #694 Bad calculation of min and max in ReferenceResults on negative result
+- #694 Instrument validity not updated in accordance with latest QC tests
+- #694 Result range shoulders computed badly on full/partial negative specs
+- #725 Late Analyses are not filtered by Department
+- #723 Solve Traceback on Print Samples Sheet
+- #724 Department Filtering Portlet appears only for the manager with 'admin' username
+- #720 Make automatic sticker printing work with 'registered' option activated
+- #719 Fix interim fields result and calculation updating on the 2-Dimensional-CSV instrument
+- #716 Samples from inside Batch are not filtered correctly
+- #707 AR Add: Set default contact on client change
+- #700 Fix filtering by review state in aggregated list of analyses
+- #715 AR Rejection Fails when e-mail Notification is enabled
+- #709 Fix removal not possible of last non-verified Analysis in Manage Analysis View
+- #706 Filtering by Department is not working
+- #712 Dates in date picker are visible again
+- #703 Containers of Duplicated Analyses are not found
+- #698 Fix Publish Actions for Batches
+- #696 Worksheet count in dashboard is wrong in when filtered by department
 
 
 1.2.3 (2018-02-23)

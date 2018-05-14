@@ -6,30 +6,28 @@
 # Some rights reserved. See LICENSE.rst, CONTRIBUTORS.rst.
 
 import json
-from DateTime import DateTime
-from operator import itemgetter
 
-from bika.lims import bikaMessageFactory as _
+from DateTime import DateTime
+from Products.Archetypes.config import REFERENCE_CATALOG
+from Products.CMFCore.utils import getToolByName
+from Products.CMFPlone.utils import safe_unicode
 from bika.lims import api, logger
+from bika.lims import bikaMessageFactory as _
+from bika.lims.api.analysis import is_out_of_range
 from bika.lims.browser.bika_listing import BikaListingView
 from bika.lims.catalog import CATALOG_ANALYSIS_LISTING
-from bika.lims.config import QCANALYSIS_TYPES
 from bika.lims.interfaces import (IAnalysisRequest, IFieldIcons,
-                                  IResultOutOfRange, IRoutineAnalysis)
+                                  IRoutineAnalysis)
+from bika.lims.permissions import (EditFieldResults, EditResults,
+                                   ViewResults, ViewRetractedAnalyses)
 from bika.lims.permissions import Verify as VerifyPermission
 from bika.lims.utils import resolve_unit
-from operator import itemgetter
-from bika.lims.permissions import (AddAnalysis, EditFieldResults, EditResults,
-                                   ViewResults, ViewRetractedAnalyses)
-from bika.lims.utils import (check_permission, dicts_to_dict, format_supsub,
+from bika.lims.utils import (check_permission, format_supsub,
                              formatDecimalMark, get_image, get_link, getUsers,
                              t)
 from bika.lims.utils.analysis import format_uncertainty
 from bika.lims.workflow import isActive, wasTransitionPerformed
 from plone.memoize import view as viewcache
-from Products.Archetypes.config import REFERENCE_CATALOG
-from Products.CMFCore.utils import getToolByName
-from Products.CMFPlone.utils import safe_unicode
 from zope.component import getAdapters
 
 
@@ -128,9 +126,6 @@ class AnalysesView(BikaListingView):
                 'sortable': False},
             'Specification': {
                 'title': _('Specification'),
-                'sortable': False},
-            'ResultDM': {
-                'title': _('Dry'),
                 'sortable': False},
             'Uncertainty': {
                 'title': _('+-'),
@@ -304,47 +299,6 @@ class AnalysesView(BikaListingView):
             return api.get_object(brain_or_object_or_uid)
         return None
 
-    def get_analysis_spec(self, analysis):
-        """Returns the dictionary with the result specifications (min, max,
-        error, etc.) that apply to the passed in Analysis or ReferenceAnalysis.
-
-        If no specifications are found, returns a basic specifications dict
-        with the following structure:
-
-            {'keyword': <analysis_service_keyword,
-             'uid': <analysis_uid>,
-             'min': ''
-             'max': ''
-             'error': ''}
-
-        :param analysis: A single Analysis brain or Content object
-        :type analysis: bika.lims.content.analysis.Analysis
-                        bika.lims.content.referenceanalysis.ReferenceAnalysis
-                        CatalogBrain
-        :return: The result specifications that apply to the Analysis.
-        :rtype: dict
-        """
-        if api.is_brain(analysis):
-            # This is a brain
-            uid = analysis.UID
-            keyword = analysis.getKeyword
-            results_range = analysis.getResultsRange
-        else:
-            # This is an object
-            uid = analysis.UID()
-            keyword = analysis.getKeyword()
-            results_range = analysis.getResultsRange()
-
-        default = {'keyword': keyword, 'uid': uid,
-                   'min': '', 'max': '', 'error': ''}
-        results_range = results_range or default
-        if isinstance(results_range, list):
-            # Convert the list of dicts to a dictionary
-            # TODO: Is this required? Why?
-            results_range = dicts_to_dict(results_range, 'keyword')
-            results_range = results_range.get(keyword, None) or default
-        return results_range
-
     @viewcache.memoize
     def get_methods_vocabulary(self, analysis_brain):
         """Returns a vocabulary with all the methods available for the passed in
@@ -435,29 +389,6 @@ class AnalysesView(BikaListingView):
             results.append({'ResultValue': analyst_id,
                             'ResultText': analyst_name})
         return results
-
-    def ResultOutOfRange(self, analysis):
-        """Template wants to know, is this analysis out of range?
-
-        We scan IResultOutOfRange adapters, and return True if any IAnalysis
-        adapters trigger a result.
-
-        :param analysis: A single Analysis brain or Content object
-        :returns: True/False
-        """
-        spec = self.get_analysis_spec(analysis)
-        # The function get_analysis_spec ALWAYS return a dict. If no specs
-        # are found for the analysis, returns a dict with empty values for
-        # min and max keys.
-        if not spec or (not spec.get('min') and not spec.get('max')):
-            return False
-        # The analysis has specs defined, evaluate if is out of range
-        adapters = getAdapters((analysis,), IResultOutOfRange)
-        for name, adapter in adapters:
-            if adapter(specification=spec):
-                return True
-        # By default, not out of range
-        return False
 
     def load_analysis_categories(self):
         # Getting analysis categories
@@ -570,8 +501,6 @@ class AnalysesView(BikaListingView):
         self._folder_item_report_visibility(obj, item)
         # Renders additional icons to be displayed
         self._folder_item_fieldicons(obj)
-        # Renders DryMatter if necessary
-        self._folder_item_dry_matter(obj, item)
         # Renders remarks toggle button
         self._folder_item_remarks(obj, item)
         # Fill converted results
@@ -1011,20 +940,31 @@ class AnalysesView(BikaListingView):
         defin = defin % (uid, json.dumps(defaults))
         item['after']['DetectionLimit'] = defin
 
-    def _folder_item_specifications(self, obj, item):
+    def _folder_item_specifications(self, analysis_brain, item):
+        """Set the results range to the item passed in"""
         # Everyone can see valid-ranges
         item['Specification'] = ''
-        spec = self.get_analysis_spec(obj)
-        if not spec:
+        results_range = analysis_brain.getResultsRange
+        if not results_range:
             return
-        min_val = spec.get('min', '')
-        min_str = ">{0}".format(min_val) if min_val else ''
-        max_val = spec.get('max', '')
-        max_str = "<{0}".format(max_val) if max_val else ''
-        error_val = spec.get('error', '')
-        error_str = "{0}%".format(error_val) if error_val else ''
-        rngstr = ",".join([x for x in [min_str, max_str, error_str] if x])
-        item['Specification'] = rngstr
+        min_str = results_range.get('min', '')
+        max_str = results_range.get('max', '')
+        min_str = api.is_floatable(min_str) and "{0}".format(min_str) or ""
+        max_str = api.is_floatable(max_str) and "{0}".format(max_str) or ""
+        specs = ", ".join([val for val in [min_str, max_str] if val])
+        if not specs:
+            return
+        item["Specification"] = "[{}]".format(specs)
+
+        # Show an icon if out of range
+        out_range, out_shoulders = is_out_of_range(analysis_brain)
+        if not out_range:
+            return
+        # At least is out of range
+        img = get_image("exclamation.png", title=_("Result out of range"))
+        if not out_shoulders:
+            img = get_image("warning.png", title=_("Result in shoulder range"))
+        self._append_html_element(item, "Result", img)
 
     def _folder_item_verify_icons(self, analysis_brain, item):
         """Set the analysis' verification icons to the item passed in.
@@ -1130,7 +1070,7 @@ class AnalysesView(BikaListingView):
         :param analysis_brain: Brain that represents an analysis
         :param item: analysis' dictionary counterpart that represents a row
         """
-        if IAnalysisRequest.providedBy(self.context):
+        if not IAnalysisRequest.providedBy(self.context):
             # We want this icon to only appear if the context is an AR
             return
 
@@ -1204,25 +1144,6 @@ class AnalysesView(BikaListingView):
                 continue
             self.field_icons[uid].extend(alerts)
 
-    def _folder_item_dry_matter(self, analysis_brain, item):
-        """Renders the result for Dry Matter if allowed for the current context
-        and analysis_brain passed in.
-
-        :param analysis_brain: Brain that represents an analysis
-        :param item: analysis' dictionary counterpart that represents a row
-        """
-        if not hasattr(self.context, 'getReportDryMatter'):
-            return
-        if not callable(self.context.getReportDryMatter):
-            return
-        if not self.context.getReportDryMatter():
-            return False
-        analysis = self.get_object(analysis_brain)
-        if analysis.getReportDryMatter():
-            item['ResultDM'] = analysis.getResultDM()
-            item['after']['ResultDM'] = "<em class='discreet'>%</em>"
-        item['ResultDM'] = ''
-
     def _folder_item_remarks(self, analysis_brain, item):
         """Renders the Remarks field for the passed in analysis and if the
         edition of the analysis is permitted, adds a button to toggle the
@@ -1263,94 +1184,3 @@ class AnalysesView(BikaListingView):
             item[position][element] = html
             return
         item[position][element] = glue.join([original, html])
-
-
-class QCAnalysesView(AnalysesView):
-    """Renders the table of QC Analyses performed related to an AR.
-
-    Different AR analyses can be achieved inside different worksheets, and each
-    one of these can have different QC Analyses. This table only lists the QC
-    Analyses performed in those worksheets in which the current AR has, at
-    least, one analysis assigned and if the QC analysis services match with
-    those from the current AR.
-    """
-
-    def __init__(self, context, request, **kwargs):
-        AnalysesView.__init__(self, context, request, **kwargs)
-        self.columns['getReferenceAnalysesGroupID'] = {
-            'title': _('QC Sample ID'),
-            'sortable': False}
-        self.columns['Worksheet'] = {'title': _('Worksheet'),
-                                     'sortable': False}
-        self.review_states[0]['columns'] = ['Service',
-                                            'Worksheet',
-                                            'getReferenceAnalysesGroupID',
-                                            'Partition',
-                                            'Method',
-                                            'Instrument',
-                                            'Result',
-                                            'Uncertainty',
-                                            'CaptureDate',
-                                            'DueDate',
-                                            'state_title']
-
-        qcanalyses = context.getQCAnalyses()
-        asuids = [an.UID() for an in qcanalyses]
-        self.contentFilter = {'UID': asuids,
-                              'sort_on': 'getId'}
-        self.icon = self.portal_url + \
-            "/++resource++bika.lims.images/referencesample.png"
-
-    # TODO-performance: Do not use object. Using brain, use meta_type in
-    # order to get the object's type
-    def folderitem(self, obj, item, index):
-        """Prepare a data item for the listing.
-
-        :param obj: The catalog brain or content object
-        :param item: Listing item (dictionary)
-        :param index: Index of the listing item
-        :returns: Augmented listing data item
-        """
-
-        obj = obj.getObject()
-        # Group items by RefSample - Worksheet - Position
-        wss = obj.getBackReferences('WorksheetAnalysis')
-        wsid = wss[0].id if wss and len(wss) > 0 else ''
-        wshref = wss[0].absolute_url() if wss and len(wss) > 0 else None
-        if wshref:
-            item['replace']['Worksheet'] = "<a href='%s'>%s</a>" % (
-                wshref, wsid)
-
-        imgtype = ""
-        if obj.portal_type == 'ReferenceAnalysis':
-            antype = QCANALYSIS_TYPES.getValue(obj.getReferenceType())
-            if obj.getReferenceType() == 'c':
-                imgtype = "<img title='%s' " \
-                          "src='%s/++resource++bika.lims.images/control.png" \
-                          "'/>&nbsp;" % (
-                              antype, self.context.absolute_url())
-            if obj.getReferenceType() == 'b':
-                imgtype = "<img title='%s' " \
-                          "src='%s/++resource++bika.lims.images/blank.png" \
-                          "'/>&nbsp;" % (
-                              antype, self.context.absolute_url())
-            item['replace']['Partition'] = "<a href='%s'>%s</a>" % (
-                obj.aq_parent.absolute_url(), obj.aq_parent.id)
-        elif obj.portal_type == 'DuplicateAnalysis':
-            antype = QCANALYSIS_TYPES.getValue('d')
-            imgtype = "<img title='%s' " \
-                      "src='%s/++resource++bika.lims.images/duplicate.png" \
-                      "'/>&nbsp;" % (
-                          antype, self.context.absolute_url())
-            item['sortcode'] = '%s_%s' % (obj.getSample().id, obj.getKeyword())
-
-        item['before']['Service'] = imgtype
-        item['sortcode'] = '%s_%s' % (obj.getReferenceAnalysesGroupID(),
-                                      obj.getKeyword())
-        return item
-
-    def folderitems(self):
-        items = AnalysesView.folderitems(self)
-        # Sort items
-        items = sorted(items, key=itemgetter('sortcode'))
-        return items

@@ -5,8 +5,6 @@
 # Copyright 2018 by it's authors.
 # Some rights reserved. See LICENSE.rst, CONTRIBUTORS.rst.
 
-import sys
-
 from AccessControl import ClassSecurityInfo
 from Products.ATExtensions.ateapi import RecordsField
 from Products.Archetypes.atapi import BooleanField
@@ -18,7 +16,6 @@ from Products.Archetypes.atapi import IntegerWidget
 from Products.Archetypes.atapi import LinesField
 from Products.Archetypes.atapi import MultiSelectionWidget
 from Products.Archetypes.atapi import ReferenceField
-from Products.Archetypes.atapi import ReferenceWidget
 from Products.Archetypes.atapi import Schema
 from Products.Archetypes.atapi import SelectionWidget
 from Products.Archetypes.atapi import StringField
@@ -26,7 +23,6 @@ from Products.Archetypes.atapi import StringWidget
 from Products.Archetypes.atapi import TextAreaWidget
 from Products.Archetypes.atapi import TextField
 from Products.Archetypes.atapi import registerType
-from Products.Archetypes.references import HoldingReference
 from Products.Archetypes.utils import DisplayList
 from Products.Archetypes.utils import IntDisplayList
 from Products.CMFCore.utils import getToolByName
@@ -440,21 +436,7 @@ schema = BikaFolderSchema.copy() + Schema((
             format='select',
         )
     ),
-    ReferenceField(
-        'DryMatterService',
-        schemata="Analyses",
-        required=0,
-        vocabulary_display_path_bound=sys.maxint,
-        allowed_types=('AnalysisService',),
-        relationship='SetupDryAnalysisService',
-        vocabulary='getAnalysisServicesVocabulary',
-        referenceClass=HoldingReference,
-        widget=ReferenceWidget(
-            label=_("Dry matter analysis"),
-            description=_("The analysis to be used for determining dry"
-                          "matter."),
-        )
-    ),
+
     LinesField(
         'ARImportOption',
         schemata="Analyses",
@@ -685,10 +667,10 @@ schema = BikaFolderSchema.copy() + Schema((
         schemata="Notifications",
         default=True,
         widget=BooleanWidget(
-            label=_("Email notification on AR retract"),
+            label=_("Email notification on AR invalidation"),
             description=_("Select this to activate automatic notifications "
-                          "via email to the Client and Lab Managers when"
-                          " an Analysis Request is retracted.")
+                          "via email to the Client and Lab Managers when an Analysis "
+                          "Request is invalidated.")
         ),
     ),
     TextField(

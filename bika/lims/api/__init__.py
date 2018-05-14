@@ -6,6 +6,8 @@
 # Some rights reserved. See LICENSE.rst, CONTRIBUTORS.rst.
 
 import Zope2
+import Missing
+import re
 
 from Acquisition import aq_base
 from AccessControl.PermissionRole import rolesForPermissionOn
@@ -15,7 +17,7 @@ from collective.taskqueue.interfaces import ITaskQueue
 from datetime import datetime
 from DateTime import DateTime
 
-from Products.CMFPlone.utils import base_hasattr
+from Products.CMFPlone.utils import base_hasattr, safe_unicode
 from Products.CMFCore.interfaces import ISiteRoot
 from Products.CMFCore.interfaces import IFolderish
 from Products.Archetypes.BaseObject import BaseObject
@@ -73,6 +75,8 @@ Thanks.
 """
 
 _marker = object()
+
+UID_RX = re.compile("[a-z0-9]{32}$")
 
 
 class BikaLIMSError(Exception):
@@ -1186,6 +1190,8 @@ def is_uid(uid, validate=False):
         return False
     if len(uid) != 32:
         return False
+    if not UID_RX.match(uid):
+        return False
     if not validate:
         return True
 
@@ -1331,3 +1337,59 @@ def to_date(value, default=None):
         return DateTime(value)
     except:
         return to_date(default)
+
+
+def is_floatable(value):
+    """Checks if the passed in value is a valid floatable number
+
+    :param value: The value to be evaluated as a float number
+    :type value: str, float, int
+    :returns: True if is a valid float number
+    :rtype: bool"""
+    try:
+        float(value)
+        return True
+    except (TypeError, ValueError):
+        return False
+
+
+def to_float(value, default=_marker):
+    """Converts the passed in value to a float number
+
+    :param value: The value to be converted to a floatable number
+    :type value: str, float, int
+    :returns: The float number representation of the passed in value
+    :rtype: float
+    """
+    if not is_floatable(value):
+        if default is not _marker:
+            return to_float(default)
+        fail("Value %s is not floatable" % repr(value))
+    return float(value)
+
+
+def to_searchable_text_metadata(value):
+    """Parse the given metadata value to searchable text
+
+    :param value: The raw value of the metadata column
+    :returns: Searchable and translated unicode value or None
+    """
+    if not value:
+        return u""
+    if value is Missing.Value:
+        return u""
+    if is_uid(value):
+        return u""
+    if isinstance(value, (bool)):
+        return u""
+    if isinstance(value, (list, tuple)):
+        for v in value:
+            return to_searchable_text_metadata(v)
+    if isinstance(value, (dict)):
+        for k, v in value.items():
+            return to_searchable_text_metadata(v)
+    if is_date(value):
+        return value.strftime("%Y-%m-%d")
+    if not isinstance(value, basestring):
+        value = str(value)
+    return safe_unicode(value)

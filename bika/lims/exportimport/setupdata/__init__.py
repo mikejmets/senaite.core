@@ -1594,7 +1594,6 @@ class Analysis_Services(WorksheetImporter):
                 PointOfCapture=row['PointOfCapture'].lower(),
                 Category=category,
                 Department=department,
-                ReportDryMatter=self.to_bool(row['ReportDryMatter']),
                 AttachmentOption=row.get('Attachment', '')[0].lower() if row.get('Attachment', '') else 'p',
                 Unit=row['Unit'] and row['Unit'] or None,
                 Precision=row['Precision'] and str(row['Precision']) or '0',
@@ -1808,8 +1807,7 @@ class AR_Templates(WorksheetImporter):
             obj.edit(
                 title=str(row['title']),
                 description=row.get('description', ''),
-                Remarks=row.get('Remarks', ''),
-                ReportDryMatter=bool(row['ReportDryMatter']))
+                Remarks=row.get('Remarks', ''),)
             obj.setSampleType(sampletype)
             obj.setSamplePoint(samplepoint)
             obj.setPartitions(partitions)
@@ -1926,12 +1924,6 @@ class Setup(WorksheetImporter):
             'hours': int(values['DefaultSampleLifetime_hours'] and values['DefaultSampleLifetime_hours'] or 0),
             'minutes': int(values['DefaultSampleLifetime_minutes'] and values['DefaultSampleLifetime_minutes'] or 0),
         }
-        dry_service = self.get_object(bsc, 'AnalysisService',
-                                      values.get('DryMatterService'))
-        dry_uid = dry_service.UID() if dry_service else None
-        if not dry_uid and values.get('DryMatterService'):
-            print("DryMatter service %s does not exist"
-                  % values['DryMatterService'])
         self.context.bika_setup.edit(
             PasswordLifetime=int(values['PasswordLifetime']),
             AutoLogOff=int(values['AutoLogOff']),
@@ -1948,7 +1940,6 @@ class Setup(WorksheetImporter):
                 values['CategoriseAnalysisServices']),
             EnableAnalysisRemarks=self.to_bool(
                 values.get('EnableAnalysisRemarks', '')),
-            DryMatterService=dry_uid,
             ARImportOption=values['ARImportOption'],
             ARAttachmentOption=values['ARAttachmentOption'][0].lower(),
             AnalysisAttachmentOption=values[
@@ -2042,7 +2033,6 @@ class Reference_Samples(WorksheetImporter):
             obj.edit(title=row['id'],
                      ReferenceType=row['ReferenceType'],
                      Result=row['Result'],
-                     ResultDM=row['ResultDM'],
                      Analyst=row['Analyst'],
                      Instrument=row['Instrument'],
                      Retested=row['Retested']
@@ -2166,7 +2156,6 @@ class Analysis_Requests(WorksheetImporter):
                 ar, service,
                 Result=row['Result'],
                 ResultCaptureDate=row['ResultCaptureDate'],
-                ResultDM=row['ResultDM'],
                 Analyst=row['Analyst'],
                 Instrument=row['Instrument'],
                 Retested=self.to_bool(row['Retested']),
@@ -2175,7 +2164,6 @@ class Analysis_Requests(WorksheetImporter):
                     'hours': int(row.get('MaxTimeAllowed_hours', 0)),
                     'minutes': int(row.get('MaxTimeAllowed_minutes', 0)),
                 },
-                ReportDryMatter=self.to_bool(row['ReportDryMatter']),
             )
 
             part = sample.objectValues()[0].UID()
@@ -2228,7 +2216,6 @@ class Analysis_Requests(WorksheetImporter):
                 CCEmails=row['CCEmails'],
                 ClientOrderNumber=row['ClientOrderNumber'],
                 InvoiceExclude=row['InvoiceExclude'],
-                ReportDryMatter=row['ReportDryMatter'],
                 DateReceived=row['DateReceived'],
                 DatePublished=row['DatePublished'],
                 Remarks=row['Remarks']
