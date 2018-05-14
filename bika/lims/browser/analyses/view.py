@@ -16,12 +16,12 @@ from bika.lims import bikaMessageFactory as _
 from bika.lims.api.analysis import is_out_of_range
 from bika.lims.browser.bika_listing import BikaListingView
 from bika.lims.catalog import CATALOG_ANALYSIS_LISTING
-from bika.lims.interfaces import (IAnalysisRequest, IFieldIcons)
+from bika.lims.interfaces import (IAnalysisRequest, IFieldIcons,
+                                  IRoutineAnalysis)
+from bika.lims.permissions import (EditFieldResults, EditResults,
+                                   ViewResults, ViewRetractedAnalyses)
 from bika.lims.permissions import Verify as VerifyPermission
 from bika.lims.utils import resolve_unit
-from bika.lims.permissions import (EditFieldResults, EditResults,
-                                   IRoutineAnalysis, ViewResults,
-                                   ViewRetractedAnalyses)
 from bika.lims.utils import (check_permission, format_supsub,
                              formatDecimalMark, get_image, get_link, getUsers,
                              t)
