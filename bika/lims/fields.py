@@ -17,6 +17,9 @@ from Products.ATExtensions.ateapi import DateTimeField
 from Products.ATExtensions.ateapi import RecordField, RecordsField
 from zope.interface import implements
 from zope.site.hooks import getSite
+from bika.lims.browser.fields import UIDReferenceField
+from bika.lims.browser.fields import ProxyField
+
 
 class ExtensionField(object):
 
@@ -120,6 +123,15 @@ class ExtStringField(ExtensionField, StringField):
 
 
 class ExtTextField(ExtensionField, TextField):
+
+    "Field extender"
+
+
+class ExtUIDReferenceField(ExtensionField, UIDReferenceField):
+
+    "Field extender"
+
+class ExtProxyField(ExtensionField, ProxyField):
 
     "Field extender"
 
