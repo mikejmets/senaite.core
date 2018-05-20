@@ -18,6 +18,7 @@ Changelog
 - #852 Cannot attach files to analysis on a worksheet when results import is used 
 - #865 AR VAT Amount when using Profiles is not calculated correctly
 - #851 Fix worksheet verification with retracted results
+- #821 Cannot retract single analysis services
 
 **Security**
 
