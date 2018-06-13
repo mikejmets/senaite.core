@@ -226,7 +226,7 @@ class AnalysesWorkflowAction(WorkflowAction):
                     ar.reindexObject()
 
         if affected_ws:
-            query = dict(UID=affected_ws, portal_type="Worksheet")
+            query = dict(UID=list(affected_ws), portal_type="Worksheet")
             for ws_brain in api.search(query, CATALOG_WORKSHEET_LISTING):
                 if ws_brain.review_state == 'to_be_verified':
                     continue
