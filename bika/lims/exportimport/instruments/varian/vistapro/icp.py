@@ -65,7 +65,7 @@ class VistaPROICPParser(InstrumentCSVResultsFileParser):
 
         splitted = [token.strip() for token in line.split(',')]
         if self._end_header:
-            resid = splitted[0]
+            resid = splitted[0].split('*')[0].strip()
         rawdict = {'DefaultResult': 'Soln Conc'}
         rawdict.update(dict(zip(self._resultsheader, splitted)))
         date_string = "{Date} {Time}".format(**rawdict)
