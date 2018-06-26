@@ -16,6 +16,7 @@ from Products.CMFCore.utils import getToolByName
 from bika.lims import bikaMessageFactory as _
 from bika.lims import api
 from bika.lims.browser import BrowserView
+from bika.lims.catalog import CATALOG_ANALYSIS_REQUEST_LISTING
 from bika.lims.exportimport.instruments.utils import \
     (get_instrument_import_search_criteria,
      get_instrument_import_override,
@@ -82,6 +83,13 @@ class LaChatQuickCheckFIAParser(InstrumentCSVResultsFileParser):
         result = self.get_result(column_name, result, line)
         rawdict[rawdict['DefaultResult']] = result
         #
+        kw = re.sub(r"\W", "", val)
+        if not is_keyword(kw):
+            new_kw = find_kw(resid, kw)
+            if new_kw:
+                val = new_kw
+                val = re.sub(r"\W", "", val)
+
         self._addRawResult(resid, values={val: rawdict}, override=False)
         self.log(
             "End of file reached successfully: ${total_objects} objects, "
@@ -104,6 +112,51 @@ class LaChatQuickCheckFIAParser(InstrumentCSVResultsFileParser):
                           "column_name": column_name},
                  numline=self._numline, line=line)
         return
+
+
+def is_keyword(kw):
+    bsc = api.get_tool('bika_setup_catalog')
+    return len(bsc(getKeyword=kw))
+
+
+def find_analyses(ar_or_sample):
+    """ This function is used to find keywords that are not on the analysis
+        but keywords that are on the interim fields.
+
+        This function and is is_keyword function should probably be in
+        resultsimport.py or somewhere central where it can be used by other
+        instrument interfaces.
+    """
+    bc = api.get_tool(CATALOG_ANALYSIS_REQUEST_LISTING)
+    ar = bc(portal_type='AnalysisRequest', id=ar_or_sample)
+    if len(ar) == 0:
+        ar = bc(portal_type='AnalysisRequest', getSampleID=ar_or_sample)
+    if len(ar) == 1:
+        obj = ar[0].getObject()
+        analyses = obj.getAnalyses(full_objects=True)
+        return analyses
+    return []
+
+
+def find_kw(ar_or_sample, kw):
+    """ This function is used to find keywords that are not on the analysis
+        but keywords that are on the interim fields.
+
+        This function and is is_keyword function should probably be in
+        resultsimport.py or somewhere central where it can be used by other
+        instrument interfaces.
+    """
+    keyword = None
+    analyses = find_analyses(ar_or_sample)
+    for analysis in analyses:
+        interims = []
+        if hasattr(analysis, 'getInterimFields'):
+            interims = analysis.getInterimFields()
+        for interim in interims:
+            if interim['keyword'] == kw:
+                keyword = analysis.getKeyword()
+                break
+    return keyword
 
 
 class Importer(AnalysisResultsImporter):
