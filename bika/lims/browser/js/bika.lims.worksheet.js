@@ -74,7 +74,6 @@
       /*
        * Eventhandler for template change
        */
-      alert('heloo')
       console.debug("°°° WorksheetFolderView::on_template_change °°°");
       // The select element for WS Template
       $el = $(event.currentTarget);
