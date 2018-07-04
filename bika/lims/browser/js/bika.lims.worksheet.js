@@ -60,6 +60,11 @@
       select = $(".instrument");
       option = select.find(`option[value='${instrument_uid}']`);
       if (option) {
+          if (option.val() == ''){
+             select.attr("disabled", true);
+          } else {
+             select.attr("disabled", false);
+          }
         return option.prop("selected", true);
       }
     }
@@ -69,6 +74,7 @@
       /*
        * Eventhandler for template change
        */
+      alert('heloo')
       console.debug("°°° WorksheetFolderView::on_template_change °°°");
       // The select element for WS Template
       $el = $(event.currentTarget);

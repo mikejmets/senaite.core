@@ -55,6 +55,9 @@ class AddWorksheetView(BrowserView):
         # if no template was specified, redirect to blank worksheet
         if not template:
             ws.processForm()
+            if instrument:
+                self.request.RESPONSE.redirect(ws.absolute_url() + "/add_analyses?instrument=%s" % instrument)
+                return
             self.request.RESPONSE.redirect(ws.absolute_url() + "/add_analyses")
             return
 

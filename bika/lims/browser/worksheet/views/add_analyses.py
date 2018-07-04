@@ -44,6 +44,13 @@ class AddAnalysesView(BikaListingView):
                               'worksheetanalysis_review_state':'unassigned',
                               'sort_on': 'getPrioritySortkey',
                               'cancellation_state':'active'}
+        # NOTE to self: This should probably be not here because it seem like a HACK
+        form = self.request.form
+        instrument_uid = form.get('instrument', '')
+        if instrument_uid:
+            self.contentFilter['getInstrumentUID'] = instrument_uid
+        # End of HACK
+
         self.base_url = self.context.absolute_url()
         self.view_url = self.base_url + "/add_analyses"
         self.show_sort_column = False
