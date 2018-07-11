@@ -38,11 +38,12 @@ class AddAnalysesView(BikaListingView):
         self.context_actions = {}
         # initial review state for first form display of the worksheet
         # add_analyses search view - first batch of analyses, latest first.
-        self.sort_on = 'Priority'
+        self.sort_on = 'DueDate'
         self.contentFilter = {'portal_type': 'Analysis',
                               'review_state':'sample_received',
                               'worksheetanalysis_review_state':'unassigned',
-                              'sort_on': 'getPrioritySortkey',
+                              'sort_on': 'getDueDate',
+                              'sort_order': 'reverse',
                               'cancellation_state':'active'}
         # NOTE to self: This should probably be not here because it seem like a HACK
         form = self.request.form
@@ -88,7 +89,8 @@ class AddAnalysesView(BikaListingView):
                 'index': 'getDateReceived'},
             'getDueDate': {
                 'title': _('Due Date'),
-                'index': 'getDueDate'},
+                'index': 'getDueDate',
+                'sortable': True, },
         }
         self.filter_indexes = ['Title',]
         self.review_states = [
