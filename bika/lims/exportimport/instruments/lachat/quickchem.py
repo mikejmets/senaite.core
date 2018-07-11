@@ -88,6 +88,8 @@ class LaChatQuickCheckFIAParser(InstrumentCSVResultsFileParser):
             new_kw = find_kw(resid, kw)
             if new_kw:
                 val = new_kw
+                rawdict[kw] = rawdict['Peak Concentration']
+                del rawdict['Peak Concentration']
                 val = re.sub(r"\W", "", val)
 
         self._addRawResult(resid, values={val: rawdict}, override=False)
