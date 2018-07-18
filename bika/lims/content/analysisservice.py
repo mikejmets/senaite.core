@@ -11,9 +11,11 @@ from Products.Archetypes.Registry import registerField
 from Products.Archetypes.public import BooleanField, BooleanWidget, \
     DisplayList, MultiSelectionWidget, Schema, registerType
 from Products.CMFCore.utils import getToolByName
+from bika.lims import PMF
 from bika.lims import api
-from bika.lims import PMF, bikaMessageFactory as _
-from bika.lims.browser.fields import InterimFieldsField, UIDReferenceField
+from bika.lims import bikaMessageFactory as _
+from bika.lims.browser.fields import InterimFieldsField
+from bika.lims.browser.fields import UIDReferenceField
 from bika.lims.browser.widgets.partitionsetupwidget import PartitionSetupWidget
 from bika.lims.browser.widgets.recordswidget import RecordsWidget
 from bika.lims.browser.widgets.referencewidget import ReferenceWidget
@@ -21,7 +23,8 @@ from bika.lims.browser.widgets.uidselectionwidget import UIDSelectionWidget
 from bika.lims.config import PROJECTNAME
 from bika.lims.content.abstractbaseanalysis import AbstractBaseAnalysis
 from bika.lims.content.abstractbaseanalysis import schema
-from bika.lims.interfaces import IAnalysisService, IHaveIdentifiers
+from bika.lims.interfaces import IAnalysisService
+from bika.lims.interfaces import IHaveIdentifiers
 from bika.lims.utils import to_utf8 as _c
 from magnitude import mg
 from zope.interface import implements
@@ -361,7 +364,7 @@ InterimFields = InterimFieldsField(
     'InterimFields',
     schemata='Method',
     widget=RecordsWidget(
-        label=_("Calculation Interim Fields"),
+        label=_("Additional Values"),
         description=_(
             "Values can be entered here which will override the defaults "
             "specified in the Calculation Interim Fields."),
@@ -561,7 +564,7 @@ class AnalysisService(AbstractBaseAnalysis):
     @security.public
     def getServiceDependants(self):
         return self.getServiceDependencies()
-        # TODO: This may have an impact on the AR View but serves as 
+        # TODO: This may have an impact on the AR View but serves as
         # a temporaly solution for https://jira.bikalabs.com/browse/LIMS-2836
         bsc = getToolByName(self, 'bika_setup_catalog')
         active_calcs = bsc(portal_type='Calculation', inactive_state="active")
