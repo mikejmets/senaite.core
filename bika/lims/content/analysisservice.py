@@ -560,6 +560,9 @@ class AnalysisService(AbstractBaseAnalysis):
 
     @security.public
     def getServiceDependants(self):
+        return self.getServiceDependencies()
+        # TODO: This may have an impact on the AR View but serves as 
+        # a temporaly solution for https://jira.bikalabs.com/browse/LIMS-2836
         bsc = getToolByName(self, 'bika_setup_catalog')
         active_calcs = bsc(portal_type='Calculation', inactive_state="active")
         calculations = [c.getObject() for c in active_calcs]
