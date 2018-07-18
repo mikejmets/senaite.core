@@ -1889,11 +1889,11 @@ schema = BikaSchema.copy() + Schema((
     StringField(
         'ClientLicenceID',
         mode="rw",
-        read_permission=permissions.View,
-        write_permission=permissions.ModifyPortalContent,
+        read_permission=View,
+        write_permission=ModifyPortalContent,
         vocabulary='getClientLicences',
         acquire=True,
-        widget=SelectionWidget(
+        widget=BikaSelectionWidget(
             format="select",
             label=_("Client's Licence"),
             description=_("Client's Licence appropriate to this AR"),
