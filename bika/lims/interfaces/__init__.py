@@ -832,6 +832,11 @@ class IProxyField(Interface):
     """
 
 
+class IRemarksField(Interface):
+    """An append-only TextField which saves information about each edit
+    """
+
+
 class IARAnalysesField(Interface):
     """A field that manages AR Analyses
     """

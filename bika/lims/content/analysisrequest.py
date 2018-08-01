@@ -20,7 +20,9 @@ from bika.lims.browser.fields import DateTimeField
 from bika.lims.browser.fields import ProxyField
 from bika.lims.browser.fields import UIDReferenceField
 # Bika Widgets
+from bika.lims.browser.fields.remarksfield import RemarksField
 from bika.lims.browser.widgets import DateTimeWidget
+from bika.lims.browser.widgets import RemarksWidget
 from bika.lims.browser.widgets import DecimalWidget
 from bika.lims.browser.widgets import PrioritySelectionWidget
 from bika.lims.browser.widgets import ReferenceWidget
@@ -1432,6 +1434,7 @@ schema = BikaSchema.copy() + Schema((
         widget=DateTimeWidget(
             label=_("Date Received"),
             description=_("The date when the sample was received"),
+            render_own_label=True,
             visible={
                 'edit': 'visible',
                 'view': 'visible',
@@ -1455,11 +1458,11 @@ schema = BikaSchema.copy() + Schema((
             },
         ),
     ),
-
-    DateTimeField(
+    ComputedField(
         'DatePublished',
         mode="r",
         read_permission=View,
+        expression="here.getDatePublished().strftime('%Y-%m-%d %H:%M %p') if here.getDatePublished() else ''",
         widget=DateTimeWidget(
             label=_("Date Published"),
             visible={
@@ -1487,59 +1490,18 @@ schema = BikaSchema.copy() + Schema((
             },
         ),
     ),
-    ComputedField(
-        'DatePublishedViewer',
-        mode="r",
-        read_permission=View,
-        expression="here.getDatePublished().strftime('%Y-%m-%d %H:%M %p') " \
-                   "if here.getDatePublished() else ''",
-        widget=StringWidget(
-            label=_("Date Published"),
-            description=_("The date when the request was published"),
-            visible={
-                'edit': 'visible',
-                'view': 'visible',
-                'add': 'invisible',
-                'secondary': 'invisible',
-                'header_table': 'visible',
-                'sample_registered': {
-                    'view': 'invisible', 'edit': 'invisible'},
-                'to_be_sampled': {'view': 'invisible', 'edit': 'invisible'},
-                'scheduled_sampling':
-                    {'view': 'invisible', 'edit': 'invisible'},
-                'sampled': {'view': 'invisible', 'edit': 'invisible'},
-                'to_be_preserved': {'view': 'invisible', 'edit': 'invisible'},
-                'sample_due': {'view': 'invisible', 'edit': 'invisible'},
-                'sample_prep': {'view': 'visible', 'edit': 'invisible'},
-                'sample_received': {'view': 'invisible', 'edit': 'invisible'},
-                'attachment_due': {'view': 'invisible', 'edit': 'invisible'},
-                'to_be_verified': {'view': 'invisible', 'edit': 'invisible'},
-                'verified': {'view': 'invisible', 'edit': 'invisible'},
-                'published': {'view': 'visible', 'edit': 'invisible'},
-                'invalid': {'view': 'visible', 'edit': 'invisible'},
-                'rejected': {'view': 'invisible', 'edit': 'invisible'},
-            },
-        ),
-    ),
-    TextField(
+
+    RemarksField(
         'Remarks',
-        default_content_type='text/x-web-intelligent',
-        allowable_content_types=('text/plain',),
-        default_output_type="text/plain",
-        mode="rw",
-        read_permission=View,
-        write_permission=ModifyPortalContent,
-        widget=TextAreaWidget(
-            macro="bika_widgets/remarks",
+        searchable=True,
+        widget=RemarksWidget(
             label=_("Remarks"),
             description=_("Remarks and comments for this request"),
-            append_only=True,
+            render_own_label=True,
             visible={
                 'edit': 'visible',
                 'view': 'visible',
-                'add': 'invisible',
-                'sample_registered':
-                    {'view': 'invisible', 'edit': 'invisible'},
+                'add': 'edit'
             },
         ),
     ),

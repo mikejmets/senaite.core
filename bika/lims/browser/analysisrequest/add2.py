@@ -36,7 +36,7 @@ from collective.taskqueue.interfaces import ITaskQueue
 from bika.lims.utils import getUsers
 
 AR_CONFIGURATION_STORAGE = "bika.lims.browser.analysisrequest.manage.add"
-SKIP_FIELD_ON_COPY = ["Sample"]
+SKIP_FIELD_ON_COPY = ["Sample", "Remarks"]
 
 
 def returns_json(func):
