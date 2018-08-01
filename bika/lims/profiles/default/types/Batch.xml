@@ -100,7 +100,7 @@
      <permission value="BIKA: View Log Tab"/>
  </action>
 
- <action title="Create Batch Invoice"
+ <action title="Create Invoice"
          action_id="Create Invoice"
          category="document_actions"
          condition_expr="python: context.isBatchInvoiceable() and not context.getPdf()"
@@ -112,7 +112,7 @@
  </action>
 
  <action title="Download Invoice"
-         action_id="Download Batch Invoice"
+         action_id="Download Invoice"
          category="document_actions"
          condition_expr="python: context.getPdf()"
          link_target=""
