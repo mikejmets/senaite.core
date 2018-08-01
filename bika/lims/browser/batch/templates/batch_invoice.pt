@@ -17,12 +17,6 @@
              src="" tal:attributes="src view/getPriorityIcon"/>
 			<span class="documentFirstHeading" tal:content="view/title"/>
 		</h1>
-        <p tal:condition="view/create_invoice">
-            <a href="issue_invoice">Create Invoice</a>
-        </p>
-        <p tal:condition="view/downloadable">
-            <a tal:attributes="href string:${context/absolute_url}/Pdf">Download</a>
-        </p>
 	</metal:content-title>
 
 	<metal:content-description fill-slot="content-description">
@@ -138,7 +132,7 @@
                     <h1>Tax Invoice</h1>
                     <p></p>
                     <p>Invoice
-                        <a tal:condition="not:view/create_invoice"
+                        <a tal:condition="python:context.getPdf()"
                            tal:attributes="href string:${context/absolute_url}/Pdf"
                            tal:content="view/invoice_id">
                         </a>
