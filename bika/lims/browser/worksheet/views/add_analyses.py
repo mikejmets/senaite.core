@@ -43,6 +43,7 @@ class AddAnalysesView(BikaListingView):
                               'review_state':'sample_received',
                               'worksheetanalysis_review_state':'unassigned',
                               'sort_on': 'getDueDate',
+                              'sort_order': 'ascending',
                               'cancellation_state':'active'}
         # NOTE to self: This should probably be not here because it seem like a HACK
         form = self.request.form
