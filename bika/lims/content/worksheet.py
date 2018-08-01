@@ -553,7 +553,7 @@ class Worksheet(BaseFolder, HistoryAwareMixin):
         if not wst:
             # No worksheet template assigned, add a new slot at the end of
             # the worksheet with the duplicate there
-            slot_to = max(occupied) + 1
+            slot_to = max(occupied or [0]) + 1
             return slot_to
 
         # If there is a match with the layout defined in the Worksheet
@@ -576,7 +576,7 @@ class Worksheet(BaseFolder, HistoryAwareMixin):
         # that a worksheet template is assigned, so we need to take care to
         # not override slots defined by its layout
         occupied.append(len(layout))
-        slot_to = max(occupied) + 1
+        slot_to = max(occupied or [0]) + 1
         return slot_to
 
     def _get_suitable_slot_for_references(self, reference):
@@ -599,7 +599,7 @@ class Worksheet(BaseFolder, HistoryAwareMixin):
         if not wst:
             # No worksheet template assigned, add a new slot at the end of the
             # worksheet with the reference analyses there
-            slot_to = max(occupied) + 1
+            slot_to = max(occupied or [0]) + 1
             return slot_to
 
         # If there is a match with the layout defined in the Worksheet Template,
@@ -623,7 +623,7 @@ class Worksheet(BaseFolder, HistoryAwareMixin):
         # that a worksheet template is assigned, so we need to take care to
         # not override slots defined by its layout
         occupied.append(len(layout))
-        slot_to = max(occupied) + 1
+        slot_to = max(occupied or [0]) + 1
         return slot_to
 
     def get_duplicates_for(self, analysis):

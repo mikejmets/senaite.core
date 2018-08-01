@@ -40,8 +40,8 @@
             <div id="section-content" class="page-header">
                 <!-- Logo -->
                 <div id="lab-logo">
-                  <a tal:attributes="href portal_url">
-                    <img tal:attributes="src string:${portal_url}/logo.png"/>
+                  <a tal:attributes="href lab/url">
+                    <img tal:attributes="src lab/logo"/>
                   </a>
                   <p></p>
                 </div>
@@ -239,23 +239,25 @@
           </div>
           <!-- Header end -->
             <p style="page-break-before: always" ></p>
-            <h3>Bank Information</h3>
-            <div class="table bank-info">
-                <div class="row">
-                  <div class="td">Account holder:</div>
-                  <div class="td" tal:content="lab/bank_account_holder"></div>
-                </div>
-                <div class="row">
-                  <div class="td">Bank</div>
-                  <div class="td" tal:content="lab/bank_name"></div>
-                </div>
-                <div class="row">
-                  <div class="td">Branch</div>
-                  <div class="td" tal:content="lab/bank_branch"></div>
-                </div>
-                <div class="row">
-                  <div class="td">Account number:</div>
-                  <div class="td" tal:content="lab/bank_account_number"></div>
+            <div class="section-content">
+                <h3>Bank Information</h3>
+                <div class="table bank-info">
+                    <div class="row">
+                      <div class="td">Account holder:</div>
+                      <div class="td" tal:content="lab/bank_account_holder"></div>
+                    </div>
+                    <div class="row">
+                      <div class="td">Bank</div>
+                      <div class="td" tal:content="lab/bank_name"></div>
+                    </div>
+                    <div class="row">
+                      <div class="td">Branch</div>
+                      <div class="td" tal:content="lab/bank_branch"></div>
+                    </div>
+                    <div class="row">
+                      <div class="td">Account number:</div>
+                      <div class="td" tal:content="lab/bank_account_number"></div>
+                    </div>
                 </div>
             </div>
         </tal:report>
