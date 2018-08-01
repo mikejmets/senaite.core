@@ -47,15 +47,9 @@ class BatchInvoiceView(BrowserView):
         else:
             # TODO: Get all ARs that have not been invoiced on this batch
             self.items = self.context.getAnalysisRequests()
-        # self.create_invoice is True if there's no PDF
-        # Also make if True if one of the ARs is not verified
-        self.create_invoice = False
-        self.downloadable = True if self.context.getPdf() else False
-        if self.downloadable:
+        if self.context.getPdf():
             # All the ARs have the same invoice id on this batch
             self.invoice_id = self.items[0].getInvoice().getId()
-        if self.context.isBatchInvoiceable() and self.downloadable is False:
-            self.create_invoice = True
 
         return self.template()
 
