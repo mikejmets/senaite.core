@@ -420,8 +420,7 @@ class AnalysisResultsImporter(Logger):
 
         # Allowed analysis states
         allowed_ar_states_msg = [t(_(s)) for s in self.getAllowedARStates()]
-        allowed_an_states_msg = [
-                t(_(s)) for s in self.getAllowedAnalysisStates()]
+        allowed_an_states_msg = [t(_(s)) for s in self.getAllowedAnalysisStates()]
         self.log("Allowed Analysis Request states: ${allowed_states}",
                  mapping={'allowed_states': ', '.join(allowed_ar_states_msg)})
         self.log("Allowed analysis states: ${allowed_states}",
@@ -473,7 +472,7 @@ class AnalysisResultsImporter(Logger):
                                   "analyses found for ${object_id}",
                                   mapping={"allowed_ar_states": ', '.join(
                                       allowed_ar_states_msg),
-                                          "object_id": objid})
+                                      "object_id": objid})
                         self.warn("Instrument not found")
                         continue
 
@@ -519,10 +518,9 @@ class AnalysisResultsImporter(Logger):
                               "'${allowed_ar_states}' "
                               "states neither QC analyses found "
                               "for ${object_id}",
-                              mapping={
-                                 "allowed_ar_states": ', '.join(
-                                     allowed_ar_states_msg),
-                                 "object_id": objid})
+                              mapping={"allowed_ar_states":
+                                       ', '.join(allowed_ar_states_msg),
+                                       "object_id": objid})
                     continue
 
                 # Look for timestamp
@@ -588,8 +586,8 @@ class AnalysisResultsImporter(Logger):
                             ar = analysis.portal_type == 'Analysis' \
                                 and analysis.aq_parent or None
                             if ar and ar.UID:
-                                importedar = ar.getId() in importedars.keys() \
-                                            and importedars[ar.getId()] or []
+                                importedar = ar.getId() in \
+                                    importedars.keys() and importedars[ar.getId()] or []
                                 if acode not in importedar:
                                     importedar.append(acode)
                                 importedars[ar.getId()] = importedar
@@ -606,9 +604,9 @@ class AnalysisResultsImporter(Logger):
         for arid, acodes in importedars.iteritems():
             acodesmsg = ["Analysis %s" % acod for acod in acodes]
             self.log(
-                    "${request_id}: ${analysis_keywords} imported sucessfully",
-                    mapping={"request_id": arid,
-                             "analysis_keywords": acodesmsg})
+                "${request_id}: ${analysis_keywords} imported sucessfully",
+                mapping={"request_id": arid,
+                         "analysis_keywords": acodesmsg})
 
         for instid, acodes in importedinsts.iteritems():
             acodesmsg = ["Analysis %s" % acod for acod in acodes]
@@ -703,21 +701,13 @@ class AnalysisResultsImporter(Logger):
         # self.log("Criteria: %s %s") % (criteria, obji))
         obj = []
         if criteria == 'arid':
-            obj = self.ar_catalog(
-                           getId=objid,
-                           review_state=states)
+            obj = self.ar_catalog(getId=objid, review_state=states)
         elif criteria == 'sid':
-            obj = self.ar_catalog(
-                           getSampleID=objid,
-                           review_state=states)
+            obj = self.ar_catalog(getSampleID=objid, review_state=states)
         elif criteria == 'csid':
-            obj = self.ar_catalog(
-                           getClientSampleID=objid,
-                           review_state=states)
+            obj = self.ar_catalog(getClientSampleID=objid, review_state=states)
         elif criteria == 'aruid':
-            obj = self.ar_catalog(
-                           UID=objid,
-                           review_state=states)
+            obj = self.ar_catalog(UID=objid, review_state=states)
         elif criteria == 'rgid':
             obj = self.bac(portal_type=['ReferenceAnalysis',
                                         'DuplicateAnalysis'],
@@ -755,7 +745,7 @@ class AnalysisResultsImporter(Logger):
         if self._priorizedsearchcriteria in ['rgid', 'rid', 'ruid']:
             # Look from reference analyses
             analyses = self._getZODBAnalysesFromReferenceAnalyses(
-                    objid, self._priorizedsearchcriteria)
+                objid, self._priorizedsearchcriteria)
         if len(analyses) == 0:
             # Look from ar and derived
             analyses = self._getZODBAnalysesFromAR(objid,
@@ -773,8 +763,8 @@ class AnalysisResultsImporter(Logger):
             self.warn(
                 "No analyses '${allowed_analysis_states}' "
                 "states found for ${object_id}",
-                mapping={"allowed_analysis_states": ', '.join(
-                    allowed_an_states_msg),
+                mapping={"allowed_analysis_states":
+                         ', '.join(allowed_an_states_msg),
                          "object_id": objid})
 
         return analyses
@@ -874,8 +864,8 @@ class AnalysisResultsImporter(Logger):
         analyses = self._getZODBAnalyses(objid)
         # Filter Analyses With Calculation
         analyses_with_calculation = filter(
-                                        lambda an: an.getCalculation(),
-                                        analyses)
+            lambda an: an.getCalculation(),
+            analyses)
         for analysis_with_calc in analyses_with_calculation:
             # Get the calculation to get the formula so that we can check
             # if param analysis keyword is used on the calculation formula
@@ -899,7 +889,6 @@ class AnalysisResultsImporter(Logger):
                              "analysis_result": str(analysis_with_calc.getResult())}
                 )
 
-
     def _process_analysis(self, objid, analysis, values):
         resultsaved = False
         acode = analysis.getKeyword()
@@ -911,7 +900,7 @@ class AnalysisResultsImporter(Logger):
                 dt = values.get('DateTime')
                 capturedate = DateTime(datetime.strptime(dt,
                                                          '%Y%m%d %H:%M:%S'))
-            except:
+            except Exception as e:
                 capturedate = None
                 pass
             del values['DateTime']
@@ -919,8 +908,9 @@ class AnalysisResultsImporter(Logger):
         fields_to_reindex = []
         # get interims
         interimsout = []
-        interims = hasattr(analysis, 'getInterimFields') \
-                   and analysis.getInterimFields() or []
+        interims = hasattr(
+            analysis, 'getInterimFields') \
+            and analysis.getInterimFields() or []
         for interim in interims:
             keyword = interim['keyword']
             title = interim['title']
@@ -954,7 +944,7 @@ class AnalysisResultsImporter(Logger):
 
         # Set result if present.
         res = values.get(defresultkey, '')
-        if res or res == 0 or self._override[1] == True:
+        if res or res == 0 or self._override[1]:
             # self.log("${object_id} result for '${analysis_keyword}': '${result}'",
             #          mapping={"obect_id": obid,
             #                   "analysis_keyword": acode,
@@ -965,7 +955,7 @@ class AnalysisResultsImporter(Logger):
                 analysis.setResultCaptureDate(capturedate)
             resultsaved = True
 
-        if resultsaved == False:
+        if not resultsaved:
             self.log(
                 "${request_id} result for '${analysis_keyword}': '${result}'",
                 mapping={"request_id": objid,
@@ -978,9 +968,9 @@ class AnalysisResultsImporter(Logger):
             fields_to_reindex.append('Result')
 
         if (resultsaved) \
-            and values.get('Remarks', '') \
-            and analysis.portal_type == 'Analysis' \
-            and (analysis.getRemarks() != '' or self._override[1] == True):
+           and values.get('Remarks', '') \
+           and analysis.portal_type == 'Analysis' \
+           and (analysis.getRemarks() != '' or self._override[1]):
             analysis.setRemarks(values['Remarks'])
             fields_to_reindex.append('Remarks')
 
