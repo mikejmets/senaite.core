@@ -194,11 +194,12 @@ class InstrumentResultsFileParser(Logger):
 
 class InstrumentCSVResultsFileParser(InstrumentResultsFileParser):
 
-    def __init__(self, infile, encoding=None):
+    def __init__(self, infile, encoding=None, separator=','):
         InstrumentResultsFileParser.__init__(self, infile, 'CSV')
         # Some Instruments can generate files with different encodings, so we
         # may need this parameter
         self._encoding = encoding
+        self._separator = separator
 
     def parse(self):
         infile = self.getInputFile()
@@ -242,7 +243,7 @@ class InstrumentCSVResultsFileParser(InstrumentResultsFileParser):
         return True
 
     def splitLine(self, line):
-        sline = line.split(',')
+        sline = line.split(self._separator)
         return [token.strip() for token in sline]
 
     def _parseline(self, line):
