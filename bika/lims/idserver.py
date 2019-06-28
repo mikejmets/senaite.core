@@ -522,7 +522,7 @@ def generateUniqueId(context, **kw):
             e, id_template))
         raise
     normalized_id = api.normalize_filename(new_id)
-    logger.info("generateUniqueId: {}".format(normalized_id))
+    logger.debug("generateUniqueId: {}".format(normalized_id))
 
     return normalized_id
 
