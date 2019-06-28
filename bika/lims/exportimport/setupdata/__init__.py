@@ -279,7 +279,7 @@ class WorksheetImporter:
             value = row.get(fieldname, '')
             field.set(obj, value)
 
-    def get_object(self, catalog, portal_type, title=None, **kwargs):
+    def get_object(self, catalog, portal_type, title=None, allow_fail=False, **kwargs):
         """This will return an object from the catalog.
         Logs a message and returns None if no object or multiple objects found.
         All keyword arguments are passed verbatim to the contentFilter
@@ -292,13 +292,21 @@ class WorksheetImporter:
         contentFilter.update(kwargs)
         brains = catalog(contentFilter)
         if len(brains) > 1:
+            if portal_type == 'AnalysisService':
+                brains = catalog(portal_type=portal_type, getKeyword=title)
+                if len(brains) == 1:
+                    return brains[0].getObject()
+            if allow_fail:
+                return None
             logger.info("More than one object found for %s" % contentFilter)
             return None
         elif len(brains) == 0:
             if portal_type == 'AnalysisService':
                 brains = catalog(portal_type=portal_type, getKeyword=title)
-                if brains:
+                if len(brains) == 1:
                     return brains[0].getObject()
+            if allow_fail:
+                return None
             logger.info("No objects found for %s" % contentFilter)
             return None
         else:
@@ -474,7 +482,7 @@ class Lab_Contacts(WorksheetImporter):
         bsc = getToolByName(self.context, 'bika_setup_catalog')
         for row in self.get_rows(3, sheet):
             if row['title'] and row['LabContact_Username']:
-                dept = self.get_object(bsc, "Department", row.get('title'))
+                dept = self.get_object(bsc, "Department", row.get('title'), allow_fail=True)
                 if dept and not dept.getManager():
                     username = safe_unicode(row['LabContact_Username']).encode('utf-8')
                     exists = [o.getObject() for o in bsc(portal_type="LabContact") if o.getObject().getUsername()==username]
@@ -721,26 +729,41 @@ class Supplier_Contacts(WorksheetImporter):
     def Import(self):
         bsc = getToolByName(self.context, 'bika_setup_catalog')
         for row in self.get_rows(3):
-            if not row['Supplier_Name']:
+            if not row.get('Supplier_Name'):
                 continue
-            if not row['Firstname']:
+            if not row.get('Firstname'):
                 continue
-            folder = bsc(portal_type="Supplier",
-                         Title=row['Supplier_Name'])
-            if not folder:
+            try:
+                folder = bsc(portal_type="Supplier", Title=row['Supplier_Name'])
+                if not folder:
+                    logger.error('SupplierContact: supplier {} not found'.format(row))
+                    continue
+                folder = folder[0].getObject()
+            except Exception as e:
+                logger.error('SupplierContact: supplier "{}" look up failed {}'.format(
+                    row, e))
                 continue
-            folder = folder[0].getObject()
-            obj = _createObjectByType("SupplierContact", folder, tmpID())
-            obj.edit(
-                Firstname=row['Firstname'],
-                Surname=row.get('Surname', ''),
-                Username=row.get('Username')
-            )
-            self.fill_contactfields(row, obj)
-            self.fill_addressfields(row, obj)
-            obj.unmarkCreationFlag()
-            renameAfterCreation(obj)
-            notify(ObjectInitializedEvent(obj))
+
+            try:
+                obj = _createObjectByType("SupplierContact", folder, tmpID())
+                obj.edit(
+                    Firstname=row.get('Firstname', ''),
+                    Surname=row.get('Surname', ''),
+                    Username=row.get('Username')
+                )
+                self.fill_contactfields(row, obj)
+                self.fill_addressfields(row, obj)
+                obj.unmarkCreationFlag()
+                renameAfterCreation(obj)
+                notify(ObjectInitializedEvent(obj))
+            except Exception as e:
+                logger.error('SupplierContact failed: {} {} {}: {}'.format(
+                    row.get('Firstname', ''),
+                    row.get('Surname', ''),
+                    row.get('Username'),
+                    e))
+
+
 
 
 class Manufacturers(WorksheetImporter):
@@ -803,8 +826,8 @@ class Instruments(WorksheetImporter):
                 UserManualID=row.get('UserManualID', ''),
             )
             instrumenttype = self.get_object(bsc, 'InstrumentType', title=row.get('Type'))
-            manufacturer = self.get_object(bsc, 'Manufacturer', title=row.get('Brand'))
-            supplier = self.get_object(bsc, 'Supplier', getName=row.get('Supplier', ''))
+            manufacturer = self.get_object(bsc, 'Manufacturer', title=row.get('Brand'), allow_fail=True)
+            supplier = self.get_object(bsc, 'Supplier', getName=row.get('Supplier', ''), allow_fail=True)
             method = self.get_object(pc, 'Method', title=row.get('Method'))
             obj.setInstrumentType(instrumenttype)
             obj.setManufacturer(manufacturer)
@@ -1138,8 +1161,9 @@ class Sample_Types(WorksheetImporter):
                                            row.get('SampleMatrix_title'))
             containertype = self.get_object(bsc, 'ContainerType',
                                             row.get('ContainerType_title'))
+            RetentionPeriod = row.get('RetentionPeriod', 0)
             retentionperiod = {
-                'days': row['RetentionPeriod'] if row['RetentionPeriod'] else 0,
+                'days': RetentionPeriod,
                 'hours': 0,
                 'minutes': 0}
             obj.edit(
@@ -1182,9 +1206,9 @@ class Sample_Points(WorksheetImporter):
                 folder = setup_folder
 
             if row['Latitude']:
-                logger.log("Ignored SamplePoint Latitude", 'error')
+                logger.error("Ignored SamplePoint Latitude")
             if row['Longitude']:
-                logger.log("Ignored SamplePoint Longitude", 'error')
+                logger.error("Ignored SamplePoint Longitude")
 
             obj = _createObjectByType("SamplePoint", folder, tmpID())
             obj.edit(
@@ -1207,12 +1231,22 @@ class Sample_Point_Sample_Types(WorksheetImporter):
     def Import(self):
         bsc = getToolByName(self.context, 'bika_setup_catalog')
         for row in self.get_rows(3):
-            sampletype = self.get_object(bsc,
-                                         'SampleType',
-                                         row.get('SampleType_title'))
-            samplepoint = self.get_object(bsc,
-                                          'SamplePoint',
-                                          row['SamplePoint_title'])
+            sample_point_title = row.get('SampleType_title')
+            if not sample_point_title:
+                continue
+
+            sampletype = self.get_object(
+                bsc,
+                'SampleType',
+                sample_point_title,
+                allow_fail=True)
+
+            samplepoint = self.get_object(
+                bsc,
+                'SamplePoint',
+                sample_point_title,
+                allow_fail=True)
+
             if samplepoint:
                 sampletypes = samplepoint.getSampleTypes()
                 if sampletype not in sampletypes:
@@ -1305,7 +1339,7 @@ class Methods(WorksheetImporter):
         bsc = getToolByName(self.context, 'bika_setup_catalog')
         for row in self.get_rows(3):
             if row['title']:
-                calculation = self.get_object(bsc, 'Calculation', row.get('Calculation_title'))
+                calculation = self.get_object(bsc, 'Calculation', row.get('Calculation_title'), allow_fail=True)
                 obj = _createObjectByType("Method", folder, tmpID())
                 obj.edit(
                     title=row['title'],
@@ -1418,10 +1452,10 @@ class Calculations(WorksheetImporter):
         bsc = getToolByName(self.context, 'bika_setup_catalog')
         for row in self.get_rows(3, sheet):
             if row.get('title', '') and row.get('Calculation_title', ''):
-                meth = self.get_object(bsc, "Method", row.get('title'))
+                meth = self.get_object(bsc, "Method", row.get('title'), allow_fail=True)
                 if meth and not meth.getCalculation():
                     calctit = safe_unicode(row['Calculation_title']).encode('utf-8')
-                    calc = self.get_object(bsc, "Calculation", calctit)
+                    calc = self.get_object(bsc, "Calculation", calctit, allow_fail=True)
                     if calc:
                         meth.setCalculation(calc.UID())
 
@@ -1455,7 +1489,8 @@ class Analysis_Services(WorksheetImporter):
             return
         for row in self.get_rows(3, worksheet=worksheet):
             service = self.get_object(bsc, 'AnalysisService',
-                                      row.get('Service_title'))
+                                      row.get('Service_title'),
+                                      allow_fail=True)
             if not service:
                 return
             sro = service.getResultOptions()
@@ -1539,7 +1574,7 @@ class Analysis_Services(WorksheetImporter):
                 return out_objects
             elif row_as_title != service_title:
                 continue
-            obj = self.get_object(cat, obj_type, row.get(column))
+            obj = self.get_object(cat, obj_type, row.get(column), allow_fail=True)
             if obj:
                 if default_obj and default_obj.UID() == obj.UID():
                     continue
@@ -1586,7 +1621,7 @@ class Analysis_Services(WorksheetImporter):
             # associated in the Analysis_Service_Methods spreadsheet, then make
             # the assumption that the DefaultMethod set in the former has to be
             # associated to the AS although the relation is missing.
-            defaultmethod = self.get_object(pc, 'Method', row.get('DefaultMethod_title'))
+            defaultmethod = self.get_object(pc, 'Method', row.get('DefaultMethod_title'), allow_fail=True)
             methods = self.get_methods(row['title'], defaultmethod)
             if not defaultmethod and methods:
                 defaultmethod = methods[0]
@@ -1635,45 +1670,54 @@ class Analysis_Services(WorksheetImporter):
             _calculation = deferredcalculation if deferredcalculation else \
                             (defaultmethod.getCalculation() if defaultmethod else None)
 
-            obj.edit(
-                title=row['title'],
-                ShortTitle=row.get('ShortTitle', row['title']),
-                description=row.get('description', ''),
-                Keyword=row['Keyword'],
-                PointOfCapture=row['PointOfCapture'].lower(),
-                Category=category,
-                Department=department,
-                AttachmentOption=row.get('Attachment', '')[0].lower() if row.get('Attachment', '') else 'p',
-                Unit=row['Unit'] and row['Unit'] or None,
-                Precision=row['Precision'] and str(row['Precision']) or '0',
-                ExponentialFormatPrecision=str(self.to_int(row.get('ExponentialFormatPrecision',7),7)),
-                LowerDetectionLimit='%06f' % self.to_float(row.get('LowerDetectionLimit', '0.0'), 0),
-                UpperDetectionLimit='%06f' % self.to_float(row.get('UpperDetectionLimit', '1000000000.0'), 1000000000.0),
-                DetectionLimitSelector=self.to_bool(row.get('DetectionLimitSelector',0)),
-                MaxTimeAllowed=MTA,
-                Price="%02f" % Float(row['Price']),
-                BulkPrice="%02f" % Float(row['BulkPrice']),
-                VAT="%02f" % Float(row['VAT']),
-                _Method=defaultmethod,
-                Methods=methods,
-                ManualEntryOfResults=allowmanualentry,
-                InstrumentEntryOfResults=allowinstrentry,
-                Instruments=instruments,
-                Calculation=_calculation,
-                UseDefaultCalculation=usedefaultcalculation,
-                DuplicateVariation="%02f" % Float(row['DuplicateVariation']),
-                Accredited=self.to_bool(row['Accredited']),
-                InterimFields=hasattr(self, 'service_interims') and self.service_interims.get(
-                    row['title'], []) or [],
-                Separate=self.to_bool(row.get('Separate', False)),
-                Container=container,
-                Preservation=preservation,
-                CommercialID=row.get('CommercialID', ''),
-                ProtocolID=row.get('ProtocolID', '')
-            )
-            obj.unmarkCreationFlag()
-            renameAfterCreation(obj)
-            notify(ObjectInitializedEvent(obj))
+            try:
+                precision = row['Precision'] and str(row['Precision']) or '0'
+                if precision and '.' in precision:
+                    precision = '.'.join(precision)[0]
+
+                row['Precision'] = precision
+                obj.edit(
+                    title=row['title'],
+                    ShortTitle=row.get('ShortTitle', row['title']),
+                    description=row.get('description', ''),
+                    Keyword=row['Keyword'],
+                    PointOfCapture=row['PointOfCapture'].lower(),
+                    Category=category,
+                    Department=department,
+                    AttachmentOption=row.get('Attachment', '')[0].lower() if row.get('Attachment', '') else 'p',
+                    Unit=row['Unit'] and row['Unit'] or None,
+                    Precision=row['Precision'],
+                    ExponentialFormatPrecision=str(self.to_int(row.get('ExponentialFormatPrecision',7),7)),
+                    LowerDetectionLimit='%06f' % self.to_float(row.get('LowerDetectionLimit', '0.0'), 0),
+                    UpperDetectionLimit='%06f' % self.to_float(row.get('UpperDetectionLimit', '1000000000.0'), 1000000000.0),
+                    DetectionLimitSelector=self.to_bool(row.get('DetectionLimitSelector',0)),
+                    MaxTimeAllowed=MTA,
+                    Price="%02f" % Float(row['Price']),
+                    BulkPrice="%02f" % Float(row['BulkPrice']),
+                    VAT="%02f" % Float(row['VAT']),
+                    _Method=defaultmethod,
+                    Methods=methods,
+                    ManualEntryOfResults=allowmanualentry,
+                    InstrumentEntryOfResults=allowinstrentry,
+                    Instruments=instruments,
+                    Calculation=_calculation,
+                    UseDefaultCalculation=usedefaultcalculation,
+                    DuplicateVariation="%02f" % Float(row['DuplicateVariation']),
+                    Accredited=self.to_bool(row['Accredited']),
+                    InterimFields=hasattr(self, 'service_interims') and self.service_interims.get(
+                        row['title'], []) or [],
+                    Separate=self.to_bool(row.get('Separate', False)),
+                    Container=container,
+                    Preservation=preservation,
+                    CommercialID=row.get('CommercialID', ''),
+                    ProtocolID=row.get('ProtocolID', '')
+                )
+                obj.unmarkCreationFlag()
+                renameAfterCreation(obj)
+                notify(ObjectInitializedEvent(obj))
+            except Exception as e:
+                logger.error('Create AS failed: {} {}'.format(
+                    str(row), e))
         self.load_result_options()
         self.load_service_uncertainties()
 
@@ -1691,8 +1735,9 @@ class Analysis_Specifications(WorksheetImporter):
                 portal_type="AnalysisService",
                 getKeyword=safe_unicode(row["service"])
             )
-        service = service[0].getObject()
-        return service
+        if service:
+            service = service[0].getObject()
+            return service
 
     def Import(self):
         s_t = ""
@@ -1709,6 +1754,11 @@ class Analysis_Specifications(WorksheetImporter):
             parent = row["Client_title"] if row["Client_title"] else "lab"
             st = row["SampleType_title"] if row["SampleType_title"] else ""
             service = self.resolve_service(row)
+            if not service:
+                logger.error('Analysis_Specifications: service {} not found'.format(
+                    title))
+                continue
+
 
             if parent not in bucket:
                 bucket[parent] = {}
@@ -1728,11 +1778,21 @@ class Analysis_Specifications(WorksheetImporter):
                 else:
                     proxy = pc(portal_type="Client", getName=safe_unicode(parent))[0]
                     folder = proxy.getObject()
+
+                if not folder:
+                    logger.error('Analysis Specification: folder for {} not found'.format(title))
+                    continue
+
                 st = bucket[parent][title]["sampletype"]
                 resultsrange = bucket[parent][title]["resultsrange"]
                 if st:
                     st_uid = bsc(portal_type="SampleType", title=safe_unicode(st))[0].UID
-                obj = _createObjectByType("AnalysisSpec", folder, tmpID())
+                try:
+                    obj = _createObjectByType("AnalysisSpec", folder, tmpID())
+                except Exception as e:
+                    logger.error('Analysis Specification: create failed for {}'.format(title))
+                    continue
+
                 obj.edit(title=title)
                 obj.setResultsRange(resultsrange)
                 if st:
@@ -1758,11 +1818,14 @@ class Analysis_Profiles(WorksheetImporter):
                 self.profile_services[row['Profile']] = []
             # Here we match againts Keyword or Title.
             # XXX We need a utility for this kind of thing.
-            service = self.get_object(bsc, 'AnalysisService', row.get('Service'))
+            service = self.get_object(bsc, 'AnalysisService', row.get('Service'), allow_fail=True)
             if not service:
                 service = bsc(portal_type='AnalysisService',
-                              getKeyword=row['Service'])[0].getObject()
-            self.profile_services[row['Profile']].append(service)
+                              getKeyword=row['Service'])
+                if service:
+                    service = service[0].getObject()
+            if service:
+                self.profile_services[row['Profile']].append(service)
 
     def Import(self):
         self.load_analysis_profile_services()
@@ -1778,7 +1841,12 @@ class Analysis_Profiles(WorksheetImporter):
                          AnalysisProfileVAT="%02f" % Float(row.get('AnalysisProfileVAT', '0.0')),
                          UseAnalysisProfilePrice=row.get('UseAnalysisProfilePrice', False)
                          )
-                obj.setService(self.profile_services[row['title']])
+                profile_service = self.profile_services.get(row['title'])
+                if profile_service:
+                    obj.setService(profile_service)
+                else:
+                    logger.error('Analysis_Profiles: profile service {} not found'.format(
+                        row['title']))
                 obj.unmarkCreationFlag()
                 renameAfterCreation(obj)
                 notify(ObjectInitializedEvent(obj))
@@ -1887,7 +1955,12 @@ class Reference_Definitions(WorksheetImporter):
             if row['ReferenceDefinition_title'] not in self.results.keys():
                 self.results[row['ReferenceDefinition_title']] = []
             service = self.get_object(bsc, 'AnalysisService',
-                                      row.get('service'))
+                                      row.get('service'), allow_fail=True)
+            if not service:
+                logger.error('Reference_Definitions: service {} not found'.format(
+                    row.get('service')))
+                continue
+
             self.results[
                 row['ReferenceDefinition_title']].append({
                     'uid': service.UID(),
@@ -1942,8 +2015,13 @@ class Worksheet_Templates(WorksheetImporter):
             return
         bsc = getToolByName(self.context, 'bika_setup_catalog')
         for row in self.get_rows(3, worksheet=worksheet):
-            service = self.get_object(bsc, 'AnalysisService',
-                                      row.get('service'))
+            service = self.get_object(
+                bsc, 'AnalysisService', row.get('service'), allow_fail=True)
+            if not service:
+                logger.error('load_wst_services: service {} not found'.format(
+                    row.get('service')))
+                continue
+
             if row['WorksheetTemplate_title'] not in self.wst_services.keys():
                 self.wst_services[row['WorksheetTemplate_title']] = []
             self.wst_services[
@@ -1958,9 +2036,21 @@ class Worksheet_Templates(WorksheetImporter):
                 obj = _createObjectByType("WorksheetTemplate", folder, tmpID())
                 obj.edit(
                     title=row['title'],
-                    description=row.get('description', ''),
-                    Layout=self.wst_layouts[row['title']])
-                obj.setService(self.wst_services[row['title']])
+                    description=row.get('description', ''))
+
+                wst_layout = self.wst_layouts.get(row['title'])
+                if wst_layout:
+                    obj.setLayout(wst_layout)
+                else:
+                    logger.error('Worksheet_Templates: WST Layout for {} not found'.format(
+                        row['title']))
+
+                wst_service = self.wst_services.get(row['title'])
+                if wst_service:
+                    obj.setService(wst_service)
+                else:
+                    logger.error('Worksheet_Templates: WST Service for {} not found'.format(
+                        row['title']))
                 obj.unmarkCreationFlag()
                 renameAfterCreation(obj)
                 notify(ObjectInitializedEvent(obj))
