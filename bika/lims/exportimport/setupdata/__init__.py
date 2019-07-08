@@ -739,31 +739,17 @@ class Supplier_Contacts(WorksheetImporter):
                     logger.error('SupplierContact: supplier {} not found'.format(row))
                     continue
                 folder = folder[0].getObject()
-            except Exception as e:
-                logger.error('SupplierContact: supplier "{}" look up failed {}'.format(
-                    row, e))
-                continue
-
-            try:
                 obj = _createObjectByType("SupplierContact", folder, tmpID())
-                obj.edit(
-                    Firstname=row.get('Firstname', ''),
-                    Surname=row.get('Surname', ''),
-                    Username=row.get('Username')
-                )
+                obj.edit(Firstname=row.get('Firstname', ''), Surname=row.get('Surname', ''))
                 self.fill_contactfields(row, obj)
                 self.fill_addressfields(row, obj)
                 obj.unmarkCreationFlag()
                 renameAfterCreation(obj)
                 notify(ObjectInitializedEvent(obj))
             except Exception as e:
-                logger.error('SupplierContact failed: {} {} {}: {}'.format(
-                    row.get('Firstname', ''),
-                    row.get('Surname', ''),
-                    row.get('Username'),
-                    e))
-
-
+                logger.error('SupplierContact: supplier "{}" look up failed {}'.format(
+                    row, e))
+                continue
 
 
 class Manufacturers(WorksheetImporter):
@@ -1740,19 +1726,22 @@ class Analysis_Specifications(WorksheetImporter):
             return service
 
     def Import(self):
-        s_t = ""
         bucket = {}
         pc = getToolByName(self.context, "portal_catalog")
         bsc = getToolByName(self.context, "bika_setup_catalog")
         # collect up all values into the bucket
+        count = 0
         for row in self.get_rows(3):
+            count += 1
             title = row.get("Title", False)
             if not title:
                 title = row.get("title", False)
                 if not title:
+                    logger.error('Analysis_Specifications: title not found in row ()'.format(
+                        count))
                     continue
-            parent = row["Client_title"] if row["Client_title"] else "lab"
-            st = row["SampleType_title"] if row["SampleType_title"] else ""
+            parent = row.get("Client_title", "lab")
+            st = row.get("SampleType_title", "") 
             service = self.resolve_service(row)
             if not service:
                 logger.error('Analysis_Specifications: service {} not found'.format(
