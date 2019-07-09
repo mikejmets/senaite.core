@@ -1467,9 +1467,15 @@ class Analysis_Services(WorksheetImporter):
         if not worksheet:
             return
         for row in self.get_rows(3, worksheet=worksheet):
-            service = self.get_object(bsc, 'AnalysisService',
-                                      row.get('Service_title'),
-                                      allow_fail=True)
+            kwargs = {}
+            if row.get('Keyword'):
+                kwargs['getKeyword'] = row['Keyword']
+            service = self.get_object(
+                bsc,
+                'AnalysisService',
+                row.get('Service_title'),
+                allow_fail=True,
+                **kwargs)
             if not service:
                 return
             sro = service.getResultOptions()
@@ -1488,8 +1494,14 @@ class Analysis_Services(WorksheetImporter):
         count = 0
         for row in self.get_rows(3, worksheet=worksheet):
             count += 1
-            service = self.get_object(bsc, 'AnalysisService',
-                                      row.get('Service_title'))
+            kwargs = {}
+            if row.get('Keyword'):
+                kwargs['getKeyword'] = row['Keyword']
+            service = self.get_object(
+                bsc,
+                'AnalysisService',
+                row.get('Service_title'),
+                **kwargs)
             if not service:
                 warning = "Unable to load an Analysis Service uncertainty. Service '%s' not found." % row.get('Service_title')
                 logger.warning(warning)
@@ -1508,43 +1520,48 @@ class Analysis_Services(WorksheetImporter):
         if bucket:
             self.write_bucket(bucket)
 
-    def get_methods(self, service_title, default_method):
+    def get_methods(self, service_title, default_method, keyword):
         """ Return an array of objects of the type Method in accordance to the
             methods listed in the 'AnalysisService Methods' sheet and service
             set in the parameter service_title.
             If default_method is set, it will be included in the returned
             array.
         """
-        return self.get_relations(
+        return self._get_relations(
             service_title,
             default_method,
             'Method',
             'portal_catalog',
             'AnalysisService Methods',
-            'Method_title'
+            'Method_title',
+            keyword
         )
 
-    def get_instruments(self, service_title, default_instrument):
+    def get_instruments(self, service_title, default_instrument, keyword):
         """ Return an array of objects of the type Instrument in accordance to
             the instruments listed in the 'AnalysisService Instruments' sheet
             and service set in the parameter 'service_title'.
             If default_instrument is set, it will be included in the returned
             array.
         """
-        return self.get_relations(
+        return self._get_relations(
             service_title,
             default_instrument,
             'Instrument',
             'bika_setup_catalog',
             'AnalysisService Instruments',
-            'Instrument_title'
+            'Instrument_title',
+            keyword
         )
 
-    def get_relations(self, service_title, default_obj, obj_type, catalog_name, sheet_name, column):
+    def _get_relations(self, service_title, default_obj, obj_type, catalog_name, sheet_name, column, keyword):
         """ Return an array of objects of the specified type in accordance to
             the object titles defined in the sheet specified in 'sheet_name' and
             service set in the paramenter 'service_title'.
             If a default_obj is set, it will be included in the returned array.
+
+            For huge data sets, it is to keep service_title unique. If a Keyword column
+            is present, use it to find the AS
         """
         out_objects = [default_obj] if default_obj else []
         cat = getToolByName(self.context, catalog_name)
@@ -1552,12 +1569,21 @@ class Analysis_Services(WorksheetImporter):
         if not worksheet:
             return out_objects
         for row in self.get_rows(3, worksheet=worksheet):
-            row_as_title = row.get('Service_title')
-            if not row_as_title:
-                return out_objects
-            elif row_as_title != service_title:
-                continue
-            obj = self.get_object(cat, obj_type, row.get(column), allow_fail=True)
+            row_as_kw = row.get('Service_keyword')
+            kwargs = {}
+            if row_as_kw and keyword:
+                if row_as_kw != keyword:
+                    continue
+                else:
+                    kwargs['getKeyword'] = keyword
+            else:
+                row_as_title = row.get('Service_title')
+                if not row_as_title:
+                    return out_objects
+                elif row_as_title != service_title:
+                    continue
+            # MJM
+            obj = self.get_object(cat, obj_type, row.get(column), allow_fail=True, **kwargs)
             if obj:
                 if default_obj and default_obj.UID() == obj.UID():
                     continue
@@ -1605,7 +1631,7 @@ class Analysis_Services(WorksheetImporter):
             # the assumption that the DefaultMethod set in the former has to be
             # associated to the AS although the relation is missing.
             defaultmethod = self.get_object(pc, 'Method', row.get('DefaultMethod_title'), allow_fail=True)
-            methods = self.get_methods(row['title'], defaultmethod)
+            methods = self.get_methods(row['title'], defaultmethod, row['Keyword'])
             if not defaultmethod and methods:
                 defaultmethod = methods[0]
 
@@ -1628,7 +1654,7 @@ class Analysis_Services(WorksheetImporter):
             # to be associated to the AS although the relation is missing and
             # the option AllowInstrumentEntryOfResults will be set to True.
             defaultinstrument = self.get_object(bsc, 'Instrument', row.get('DefaultInstrument_title'))
-            instruments = self.get_instruments(row['title'], defaultinstrument)
+            instruments = self.get_instruments(row['title'], defaultinstrument, row.get('Keyword', ''))
             allowinstrentry = True if instruments else False
             if not defaultinstrument and instruments:
                 defaultinstrument = instruments[0]
@@ -1708,10 +1734,16 @@ class Analysis_Specifications(WorksheetImporter):
 
     def resolve_service(self, row):
         bsc = getToolByName(self.context, "bika_setup_catalog")
-        service = bsc(
-            portal_type="AnalysisService",
-            title=safe_unicode(row["service"])
-        )
+        if row.get('keyword'):
+            service = bsc(
+                portal_type="AnalysisService",
+                getKeyword=safe_unicode(row["keyword"])
+            )
+        else:
+            service = bsc(
+                portal_type="AnalysisService",
+                title=safe_unicode(row["service"])
+            )
         if not service:
             service = bsc(
                 portal_type="AnalysisService",
@@ -1737,6 +1769,9 @@ class Analysis_Specifications(WorksheetImporter):
                         count))
                     continue
             parent = row.get("Client_title", "lab")
+            if len(parent) == 0:
+                parent = 'lab'
+
             st = row.get("SampleType_title", "")
             service = self.resolve_service(row)
             if not service:
@@ -1760,8 +1795,12 @@ class Analysis_Specifications(WorksheetImporter):
                 if parent == "lab":
                     folder = self.context.bika_setup.bika_analysisspecs
                 else:
-                    proxy = pc(portal_type="Client", getName=safe_unicode(parent))[0]
-                    folder = proxy.getObject()
+                    proxy = pc(portal_type="Client", getName=safe_unicode(parent))
+                    if len(proxy) == 0:
+                        logger.error('Analysis Specification: client {} for {} not found'.format(
+                            parent, title))
+                        continue
+                    folder = proxy[0].getObject()
 
                 if not folder:
                     logger.error('Analysis Specification: folder for {} not found'.format(title))
@@ -1802,7 +1841,11 @@ class Analysis_Profiles(WorksheetImporter):
                 self.profile_services[row['Profile']] = []
             # Here we match againts Keyword or Title.
             # XXX We need a utility for this kind of thing.
-            service = self.get_object(bsc, 'AnalysisService', row.get('Service'), allow_fail=True)
+
+            kwargs = {}
+            if row.get('Service'):
+                kwargs['getKeyword'] = row['Service']
+            service = self.get_object(bsc, 'AnalysisService', row.get('Title'), allow_fail=True, **kwargs)
             if not service:
                 service = bsc(portal_type='AnalysisService',
                               getKeyword=row['Service'])
@@ -1936,8 +1979,15 @@ class Reference_Definitions(WorksheetImporter):
         for row in self.get_rows(3, worksheet=worksheet):
             if row['ReferenceDefinition_title'] not in self.results.keys():
                 self.results[row['ReferenceDefinition_title']] = []
-            service = self.get_object(bsc, 'AnalysisService',
-                                      row.get('service'), allow_fail=True)
+            kwargs = {}
+            if row.get('Keyword'):
+                kwargs['getKeyword'] = row['Keyword']
+            service = self.get_object(
+                bsc,
+                'AnalysisService',
+                row.get('service'),
+                allow_fail=True,
+                **kwargs)
             if not service:
                 logger.error('Reference_Definitions: service {} not found'.format(
                     row.get('service')))
@@ -1997,8 +2047,11 @@ class Worksheet_Templates(WorksheetImporter):
             return
         bsc = getToolByName(self.context, 'bika_setup_catalog')
         for row in self.get_rows(3, worksheet=worksheet):
+            kwargs = {}
+            if row.get('Keyword'):
+                kwargs['getKeyword'] = row['Keyword']
             service = self.get_object(
-                bsc, 'AnalysisService', row.get('service'), allow_fail=True)
+                bsc, 'AnalysisService', row.get('service'), allow_fail=True, **kwargs)
             if not service:
                 logger.error('load_wst_services: service {} not found'.format(
                     row.get('service')))
