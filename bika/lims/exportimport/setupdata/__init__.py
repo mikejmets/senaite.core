@@ -336,7 +336,7 @@ class Lab_Information(WorksheetImporter):
         for row in self.get_rows(3):
             values[row['Field']] = row['Value']
 
-        if values['AccreditationBodyLogo']:
+        if values.get('AccreditationBodyLogo'):
             path = resource_filename(
                 self.dataset_project,
                 "setupdata/%s/%s" % (self.dataset_name,
@@ -1187,9 +1187,9 @@ class Sample_Points(WorksheetImporter):
                 folder = setup_folder
 
             if row['Latitude']:
-                logger.error("Ignored SamplePoint Latitude")
+                logger.error("Sample_Points: Ignored SamplePoint Latitude")
             if row['Longitude']:
-                logger.error("Ignored SamplePoint Longitude")
+                logger.error("Sample_Points: Ignored SamplePoint Longitude")
 
             obj = _createObjectByType("SamplePoint", folder, tmpID())
             obj.edit(
@@ -1734,17 +1734,21 @@ class Analysis_Specifications(WorksheetImporter):
 
     def resolve_service(self, row):
         bsc = getToolByName(self.context, "bika_setup_catalog")
-        if row.get('keyword'):
+        if row.get('Keyword'):
             service = bsc(
                 portal_type="AnalysisService",
-                getKeyword=safe_unicode(row["keyword"])
+                getKeyword=safe_unicode(row["Keyword"])
             )
-        else:
+        elif row.get('service'):
             service = bsc(
                 portal_type="AnalysisService",
                 title=safe_unicode(row["service"])
             )
+        else:
+            return
+
         if not service:
+            # Try using title in keyword lookup
             service = bsc(
                 portal_type="AnalysisService",
                 getKeyword=safe_unicode(row["service"])
@@ -1775,8 +1779,8 @@ class Analysis_Specifications(WorksheetImporter):
             st = row.get("SampleType_title", "")
             service = self.resolve_service(row)
             if not service:
-                logger.error('Analysis_Specifications: service {} not found'.format(
-                    title))
+                logger.error('Analysis_Specifications: service "{}/{}" not found in spec "{}"'.format(
+                    row.get('service', '-'), row.get('Keyword', '-'), title))
                 continue
 
             if parent not in bucket:
@@ -1872,8 +1876,12 @@ class Analysis_Profiles(WorksheetImporter):
                 if profile_service:
                     obj.setService(profile_service)
                 else:
-                    logger.error('Analysis_Profiles: profile service {} not found'.format(
-                        row['title']))
+                    if profile_service is not None and len(profile_service) == 0:
+                        logger.error('Analysis_Profiles: profile "{}" has no services'.format(
+                            row['title']))
+                    else:
+                        logger.error('Analysis_Profiles: profile "{}" not found'.format(
+                            row['title']))
                 obj.unmarkCreationFlag()
                 renameAfterCreation(obj)
                 notify(ObjectInitializedEvent(obj))
@@ -1989,8 +1997,8 @@ class Reference_Definitions(WorksheetImporter):
                 allow_fail=True,
                 **kwargs)
             if not service:
-                logger.error('Reference_Definitions: service {} not found'.format(
-                    row.get('service')))
+                logger.error('Reference_Definitions: service {}/{} not found'.format(
+                    row.get('service'), row.get('Keyword')))
                 continue
 
             self.results[
@@ -2053,8 +2061,8 @@ class Worksheet_Templates(WorksheetImporter):
             service = self.get_object(
                 bsc, 'AnalysisService', row.get('service'), allow_fail=True, **kwargs)
             if not service:
-                logger.error('load_wst_services: service {} not found'.format(
-                    row.get('service')))
+                logger.error('load_wst_services: service {}/{} not found'.format(
+                    row.get('service'), row.get('Keyword')))
                 continue
 
             if row['WorksheetTemplate_title'] not in self.wst_services.keys():
