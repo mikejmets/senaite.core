@@ -37,6 +37,7 @@ from bika.lims.utils import tmpID
 from bika.lims.utils import to_unicode
 from bika.lims.utils.analysis import create_analysis
 from Products.Archetypes.event import ObjectInitializedEvent
+from Products.ATContentTypes.utils import dt2DT
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.utils import _createObjectByType
 from Products.CMFPlone.utils import safe_unicode
@@ -946,9 +947,9 @@ class Instrument_Certifications(WorksheetImporter):
                 obj.edit(
                     title=row['title'],
                     AssetNumber=row.get('assetnumber', ''),
-                    Date=row.get('date', ''),
-                    ValidFrom=certificate_start_date,
-                    ValidTo=certificate_expire_date,
+                    Date=dt2DT(row.get('date', '')),
+                    ValidFrom=dt2DT(certificate_start_date),
+                    ValidTo=dt2DT(certificate_expire_date),
                     Agency=row.get('agency', ''),
                     Remarks=row.get('remarks', ''),
                 )
