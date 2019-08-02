@@ -1614,7 +1614,15 @@ class Analysis_Services(WorksheetImporter):
                 'hours': self.to_int(row.get('MaxTimeAllowed_hours', 0), 0),
                 'minutes': self.to_int(row.get('MaxTimeAllowed_minutes', 0), 0),
             }
+            if row.get('AnalysisCategory_title') is None or len(row.get('AnalysisCategory_title')) == 0:
+                logger.error('Analysis_Services: Category not provided for AS "{}"'.format(
+                    row['title']))
+                continue
             category = self.get_object(bsc, 'AnalysisCategory', row.get('AnalysisCategory_title'))
+            if category is None:
+                logger.error('Analysis_Services: Category "{}" not found for AS "{}"'.format(
+                    row['AnalysisCategory_title'], row['title']))
+                continue
             department = self.get_object(bsc, 'Department', row.get('Department_title'))
             container = self.get_object(bsc, 'Container', row.get('Container_title'))
             preservation = self.get_object(bsc, 'Preservation', row.get('Preservation_title'))
