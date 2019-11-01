@@ -1606,6 +1606,8 @@ class Analysis_Services(WorksheetImporter):
         pc = getToolByName(self.context, 'portal_catalog')
         for row in self.get_rows(3):
             if not row['title']:
+                logger.error('Analysis_Services: Title not provided for AS "{}"'.format(
+                    str(row)))
                 continue
 
             obj = _createObjectByType("AnalysisService", folder, tmpID())
@@ -1614,6 +1616,10 @@ class Analysis_Services(WorksheetImporter):
                 'hours': self.to_int(row.get('MaxTimeAllowed_hours', 0), 0),
                 'minutes': self.to_int(row.get('MaxTimeAllowed_minutes', 0), 0),
             }
+            if row.get('Keyword') is None or len(row.get('Keyword')) == 0:
+                logger.error('Analysis_Services: Keyword not provided for AS "{}"'.format(
+                    row['title']))
+                continue
             if row.get('AnalysisCategory_title') is None or len(row.get('AnalysisCategory_title')) == 0:
                 logger.error('Analysis_Services: Category not provided for AS "{}"'.format(
                     row['title']))
