@@ -44,6 +44,7 @@ from bika.lims.browser.widgets import SelectionWidget as BikaSelectionWidget
 from bika.lims.browser.widgets.durationwidget import DurationWidget
 from bika.lims.catalog import CATALOG_ANALYSIS_LISTING
 from bika.lims.catalog import CATALOG_ANALYSIS_REQUEST_LISTING
+from bika.lims.catalog.bika_catalog import BIKA_CATALOG
 from bika.lims.config import PRIORITIES
 from bika.lims.config import PROJECTNAME
 from bika.lims.content.analysisspec import ResultsRangeDict
@@ -51,6 +52,7 @@ from bika.lims.content.bikaschema import BikaSchema
 from bika.lims.interfaces import IAnalysisRequest
 from bika.lims.interfaces import IAnalysisRequestPartition
 from bika.lims.interfaces import ICancellable
+from bika.lims.interfaces import ISubmitted
 from bika.lims.permissions import FieldEditBatch
 from bika.lims.permissions import FieldEditClient
 from bika.lims.permissions import FieldEditClientOrderNumber
@@ -309,7 +311,8 @@ schema = BikaSchema.copy() + Schema((
             visible={
                 'add': 'edit',
             },
-            catalog_name="bika_catalog",
+            catalog_name=BIKA_CATALOG,
+            search_fields=('listing_searchable_text',),
             base_query={"is_active": True,
                         "sort_limit": 50,
                         "sort_on": "sortable_title",
@@ -317,12 +320,13 @@ schema = BikaSchema.copy() + Schema((
             colModel=[
                 {'columnName': 'getId', 'width': '20',
                  'label': _('Batch ID'), 'align': 'left'},
+                {'columnName': 'Title', 'width': '20',
+                 'label': _('Title'), 'align': 'left'},
                 {'columnName': 'getClientBatchID', 'width': '20',
                  'label': _('CBID'), 'align': 'left'},
                 {'columnName': 'getClientTitle', 'width': '30',
                  'label': _('Client'), 'align': 'left'},
             ],
-            minLength=3,
             force_all = False,
             ui_item="getId",
             showOn=True,
@@ -1291,6 +1295,20 @@ schema = BikaSchema.copy() + Schema((
         widget=ReferenceWidget(
             visible=False,
         ),
+    ),
+
+    # The Primary Sample the current sample was detached from
+    ReferenceField(
+        "DetachedFrom",
+        allowed_types=("AnalysisRequest",),
+        relationship="AnalysisRequestDetachedFrom",
+        referenceClass=HoldingReference,
+        mode="rw",
+        read_permission=View,
+        write_permission=ModifyPortalContent,
+        widget=ReferenceWidget(
+            visible=False,
+        )
     ),
 
     # The Analysis Request the current Analysis Request comes from because of
@@ -2283,11 +2301,11 @@ class AnalysisRequest(BaseFolder):
         return self.getSamplingWorkflowEnabled()
 
     def isOpen(self):
-        """Returns whether all analyses from this Analysis Request are open
-        (their status is either "assigned" or "unassigned")
+        """Returns whether all analyses from this Analysis Request haven't been
+        submitted yet (are in a open status)
         """
         for analysis in self.getAnalyses():
-            if not api.get_object(analysis).isOpen():
+            if ISubmitted.providedBy(api.get_object(analysis)):
                 return False
         return True
 

@@ -20,7 +20,7 @@
 
 from setuptools import setup, find_packages
 
-version = '1.3.1'
+version = '1.3.3'
 
 setup(
     name='senaite.core',
@@ -82,6 +82,8 @@ setup(
         'tinycss2<1.0.0',
         # Add this line *after* senaite.impress 1.2.0 was realeased!
         'senaite.impress>=1.2.0',
+        # Python 2/3 compatibility library: https://six.readthedocs.io/
+        'six',
     ],
     extras_require={
         'test': [

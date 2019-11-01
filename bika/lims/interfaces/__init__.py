@@ -21,10 +21,25 @@
 from zope.interface import Interface
 
 
+class ISenaiteSiteRoot(Interface):
+    """Marker interface for the Senaite Site Root
+    """
+
+
 class IBikaLIMS(Interface):
     """Marker interface that defines a Zope 3 browser layer.
-       If you need to register a viewlet only for the
-       "bika" theme, this interface must be its layer
+
+    N.B. Please use ISenaiteSite interface
+    """
+
+
+class ISenaiteSite(IBikaLIMS):
+    """Marker interface for Zope 3 browser layers.
+    """
+
+
+class IAutoGenerateID(Interface):
+    """Auto-generate ID with ID server
     """
 
 
@@ -316,14 +331,12 @@ class IContainerTypes(Interface):
 
 
 class IIdentifierTypes(Interface):
-    """Marker interface for identifier types
+    """TODO: Remove in senaite.core 1.3.3
     """
 
 
 class IHaveIdentifiers(Interface):
-    """If this interface is provided by an AT object, the object will
-    automatically be given an 'Identifiers' field, which will be associated
-    with the bika_identifiertypes in site setup.
+    """TODO: Remove in senaite.core 1.3.3
     """
 
 
@@ -940,6 +953,63 @@ class IReceived(Interface):
     """Marker interface for received objects
     """
 
+
 class IInternalUse(Interface):
     """Marker interface for objects only lab personnel must have access
     """
+
+
+class IDetachedPartition(Interface):
+    """Marker interface for samples that have been detached from its primary
+    """
+
+
+class IGuardAdapter(Interface):
+    """Marker interface for guard adapters
+    """
+
+    def guard(self, transition):
+        """Return False if you want to block the transition
+        """
+
+
+class IAddSampleFieldsFlush(Interface):
+    """Marker interface for field dependencies flush for Add Sample form
+    """
+
+    def get_flush_settings(self):
+        """Returns a dict where the key is the name of the field and the value
+        is an array dependencies as field names
+        """
+
+
+class IAddSampleObjectInfo(Interface):
+    """Marker interface for objects metadata mapping
+    """
+
+    def get_object_info(self):
+        """Returns the dict representation of the context object for its
+        correct consumption by Sample Add form:
+
+        {'id': <id_of_the_object>,
+         'uid': <uid_of_the_object>,
+         'title': <title_of_the_object>,
+         'filter_queries': {
+             <dependent_field_name>: {
+                 <catalog_index>: <criteria>
+             }
+         },
+         'field_values': {
+             <dependent_field_name>: {
+                <uid>: <dependent_uid>,
+                <title>: <dependent_title>
+            }
+         }
+
+        Besides the basic keys (id, uid, title), two additional keys can be
+        provided:
+        - filter_queries: contains the filter queries for other fields to be
+          applied when the value of current field changes.
+        - field_values: contains default values for other fields to be applied
+          when the value of the current field changes.
+        """

@@ -88,7 +88,8 @@ class ClientFieldVisibility(SenaiteATWidgetVisibility):
 
 class BatchFieldVisibility(SenaiteATWidgetVisibility):
     """This will force the 'Batch' field to 'hidden' in ar_add when the parent
-    context is a Batch.
+    context is a Batch and in Analysis Request view when current user is a
+    client and the assigned batch does not have a client assigned.
     """
     def __init__(self, context):
         super(BatchFieldVisibility, self).__init__(
@@ -97,6 +98,17 @@ class BatchFieldVisibility(SenaiteATWidgetVisibility):
     def isVisible(self, field, mode="view", default="visible"):
         if IBatch.providedBy(self.context.aq_parent):
             return "hidden"
+
+        if mode == "edit":
+            client = api.get_current_client()
+            if client:
+                # If current user is a client contact and the batch this Sample
+                # is assigned to does not have a client assigned (e.g., the
+                # batch was assigned by lab personnel), hide this field
+                batch = self.context.getBatch()
+                if batch.getClient() != client:
+                    return "invisible"
+
         return default
 
 
@@ -172,7 +184,7 @@ class RegistryHiddenFieldsVisibility(SenaiteATWidgetVisibility):
     def __init__(self, context):
         field_names = getHiddenAttributesForClass(context.portal_type)
         super(RegistryHiddenFieldsVisibility, self).__init__(
-            context=context, sort=-1, field_names=[field_names,])
+            context=context, sort=float("inf"), field_names=[field_names, ])
 
     def isVisible(self, field, mode="view", default="visible"):
         return "invisible"
@@ -219,7 +231,7 @@ class SecondaryDateSampledFieldVisibility(SenaiteATWidgetVisibility):
     """
     def __init__(self, context):
         super(SecondaryDateSampledFieldVisibility, self).__init__(
-            context=context, sort=3, field_names=["DateSampled"])
+            context=context, sort=20, field_names=["DateSampled"])
 
     def isVisible(self, field, mode="view", default="visible"):
         """Returns whether the field is visible in a given mode
@@ -230,7 +242,10 @@ class SecondaryDateSampledFieldVisibility(SenaiteATWidgetVisibility):
         # If this is a Secondary Analysis Request, this field is not editable
         if IAnalysisRequestSecondary.providedBy(self.context):
             return "invisible"
-        return default
+
+        # Delegate to SamplingFieldsVisibility adapter
+        return SamplingFieldsVisibility(self.context).isVisible(
+            field, mode=mode, default=default)
 
 
 class PrimaryAnalysisRequestFieldVisibility(SenaiteATWidgetVisibility):
@@ -254,6 +269,32 @@ class PrimaryAnalysisRequestFieldVisibility(SenaiteATWidgetVisibility):
         # No mather if the mode is edit or view, display it always as readonly
         if mode == "edit":
             return "invisible"
+
+        return default
+
+
+class BatchClientFieldVisibility(SenaiteATWidgetVisibility):
+    """Client field in a Batch in only editable while it is being created or
+    when the Batch does not contain any sample
+    """
+    def __init__(self, context):
+        super(BatchClientFieldVisibility, self).__init__(
+            context=context, sort=3, field_names=["Client"])
+
+    def isVisible(self, field, mode="view", default="visible"):
+        """Returns whether the field is visible in a given state
+        """
+        if self.context.getClient():
+            # This batch has a client assigned already and this cannot be
+            # changed to prevent inconsistencies (client contacts can access
+            # to batches that belong to their same client)
+            return "invisible"
+
+        if mode == "edit":
+            # This batch does not have a client assigned, but allow the client
+            # field to be editable only if does not contain any sample
+            if self.context.getAnalysisRequestsBrains():
+                return "invisible"
 
         return default
 

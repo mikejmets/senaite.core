@@ -1,7 +1,83 @@
 Changelog
 =========
 
-1.3.1 (unreleased)
+
+1.3.3 (unreleased)
+------------------
+
+**Added**
+
+
+**Changed**
+
+
+**Removed**
+
+
+**Fixed**
+
+
+**Security**
+
+
+
+1.3.2 (2019-10-30)
+------------------
+
+**Added**
+
+- #1463 Structure Export/Import Handlers for Generic Setup
+- #1462 Allow to extend the behavior of fields from AddSample view with adapters
+- #1455 Added support for adapters in guard handler
+- #1436 Setting in setup for auto-reception of samples upon creation
+- #1433 Added Submitter column in Sample's analyses listing
+- #1441 Added Auto ID Behavior for Dexterity Contents
+- #1422 Notify user with failing addresses when emailing of results reports
+- #1420 Allow to detach a partition from its primary sample
+- #1410 Email API
+
+
+**Changed**
+
+- #1451 Render Analysis Remarks in Listings as HTML
+- #1445 Allow formatted HTML in the other rejection reasons
+- #1428 Publish verified partitions
+- #1429 Add2: Do not set template values on already filled fields
+- #1427 Improved performance of Sample header table rendering
+- #1417 Cache allowed transitions for analyses on the request
+- #1413 Improved Email Publication
+
+
+**Removed**
+
+- #1449 Removed InheritedObjects (Inherited from) field from Batch
+- #1430 Removed Identifier Types
+
+
+**Fixed**
+
+- #1462 Autofill Client Contact in Sample Add form when current user is a client
+- #1461 Allow unassign transition for cancelled/rejected/retracted analyses
+- #1449 sort_limit was not considered in ReferenceWidget searches
+- #1449 Fix Clients were unable to add batches
+- #1453 Fix initial IDs not starting with 1
+- #1454 Fix occasional error when labeling samples w/o report as printed
+- #1452 Fix missing error percentage calculation for reference samples
+- #1447 New Client contact has access to last client's Sample only
+- #1446 Parameter `group` in `contact._addUserToGroup` was not considered
+- #1444 Fixed Worksheet autofill of wide Iterims
+- #1443 Fix non-saving checkbox values for manual Interims in Analysis Services
+- #1439 Fix global Auditlog when Analyses/Attachments were removed
+- #1426 Render HTML Texts in Info Popups correctly
+- #1423 Use the value set for ui_item property when displaying ReferenceWidget
+- #1425 Fix adapter priority for widget visibility
+- #1421 Fix Search Query for Batches Listing
+- #1418 Subscriber adapters not supported in clients listing
+- #1419 Mixed permissions for transitions in client workflow
+- #1414 Occasional "OSError: [Errno 24] Too many open files" in frontpage
+
+
+1.3.1 (2019-07-01)
 ------------------
 
 **Added**
@@ -51,9 +127,6 @@ Changelog
 - #1356 Fixed selection on Analysis Spec on AR
 - #1353 Fixed saving of PublicationSpecification on AR
 - #1376 Fixed ft120.py to properly import winescan ft120 CSV files
-
-
-**Security**
 
 
 1.3.0 (2019-03-30)
