@@ -45,8 +45,9 @@ from bika.lims import bikaMessageFactory as _
 from bika.lims import logger
 from bika.lims.api.analysisservice import get_calculation_dependencies_for
 from bika.lims.api.analysisservice import get_service_dependencies_for
-from bika.lims.interfaces import IGetDefaultFieldValueARAddHook, \
-    IAddSampleFieldsFlush, IAddSampleObjectInfo
+from bika.lims.interfaces import IAddSampleFieldsFlush
+from bika.lims.interfaces import IAddSampleObjectInfo
+from bika.lims.interfaces import IGetDefaultFieldValueARAddHook
 from bika.lims.utils import tmpID
 from bika.lims.utils.analysisrequest import create_analysisrequest as crar
 from bika.lims.workflow import ActionHandlerPool
@@ -820,30 +821,16 @@ class ajaxAnalysisRequestAddView(AnalysisRequestAddView):
         default_contact = self.get_default_contact(client=obj)
         if default_contact:
             info["field_values"].update({
-                "Contact": self.get_contact_info(default_contact)
+                "Contact": self.get_contact_info(default_contact),
             })
+
+        # Set default CC Email field
+        info["field_values"].update({
+            "CCEmails": {"value": obj.getCCEmails()}
+        })
 
         # UID of the client
         uid = api.get_uid(obj)
-
-        # Bika Setup folder
-        bika_setup = api.get_bika_setup()
-
-        # bika samplepoints
-        bika_samplepoints = bika_setup.bika_samplepoints
-        bika_samplepoints_uid = api.get_uid(bika_samplepoints)
-
-        # bika artemplates
-        bika_artemplates = bika_setup.bika_artemplates
-        bika_artemplates_uid = api.get_uid(bika_artemplates)
-
-        # bika analysisprofiles
-        bika_analysisprofiles = bika_setup.bika_analysisprofiles
-        bika_analysisprofiles_uid = api.get_uid(bika_analysisprofiles)
-
-        # bika analysisspecs
-        bika_analysisspecs = bika_setup.bika_analysisspecs
-        bika_analysisspecs_uid = api.get_uid(bika_analysisspecs)
 
         # catalog queries for UI field filtering
         filter_queries = {
@@ -857,16 +844,16 @@ class ajaxAnalysisRequestAddView(AnalysisRequestAddView):
                 "getParentUID": [uid]
             },
             "SamplePoint": {
-                "getClientUID": [uid, bika_samplepoints_uid],
+                "getClientUID": [uid, ""],
             },
             "Template": {
-                "getClientUID": [uid, bika_artemplates_uid],
+                "getClientUID": [uid, ""],
             },
             "Profiles": {
-                "getClientUID": [uid, bika_analysisprofiles_uid],
+                "getClientUID": [uid, ""],
             },
             "Specification": {
-                "getClientUID": [uid, bika_analysisspecs_uid],
+                "getClientUID": [uid, ""],
             },
             "SamplingRound": {
                 "getParentUID": [uid],
@@ -1014,17 +1001,6 @@ class ajaxAnalysisRequestAddView(AnalysisRequestAddView):
         """
         info = self.get_base_info(obj)
 
-        # Bika Setup folder
-        bika_setup = api.get_bika_setup()
-
-        # bika samplepoints
-        bika_samplepoints = bika_setup.bika_samplepoints
-        bika_samplepoints_uid = api.get_uid(bika_samplepoints)
-
-        # bika analysisspecs
-        bika_analysisspecs = bika_setup.bika_analysisspecs
-        bika_analysisspecs_uid = api.get_uid(bika_analysisspecs)
-
         # client
         client = self.get_client()
         client_uid = client and api.get_uid(client) or ""
@@ -1040,12 +1016,12 @@ class ajaxAnalysisRequestAddView(AnalysisRequestAddView):
         filter_queries = {
             "SamplePoint": {
                 "getSampleTypeTitles": [obj.Title(), ''],
-                "getClientUID": [client_uid, bika_samplepoints_uid],
+                "getClientUID": [client_uid, ""],
                 "sort_order": "descending",
             },
             "Specification": {
                 "getSampleTypeTitle": obj.Title(),
-                "getClientUID": [client_uid, bika_analysisspecs_uid],
+                "getClientUID": [client_uid, ""],
                 "sort_order": "descending",
             }
         }
@@ -1067,10 +1043,6 @@ class ajaxAnalysisRequestAddView(AnalysisRequestAddView):
         sample_point = obj.getSamplePoint()
         container = obj.getContainer()
         deviation = obj.getSamplingDeviation()
-        preservation = obj.getPreservation()
-        specification = obj.getSpecification()
-        sample_template = obj.getTemplate()
-        profiles = obj.getProfiles() or []
         cccontacts = obj.getCCContact() or []
         contact = obj.getContact()
 
@@ -1098,10 +1070,6 @@ class ajaxAnalysisRequestAddView(AnalysisRequestAddView):
             "StorageLocation": self.to_field_value(storage_location),
             "Container": self.to_field_value(container),
             "SamplingDeviation": self.to_field_value(deviation),
-            "Preservation": self.to_field_value(preservation),
-            "Specification": self.to_field_value(specification),
-            "Template": self.to_field_value(sample_template),
-            "Profiles": map(self.to_field_value, profiles),
             "Composite": {"value": obj.getComposite()}
         })
 

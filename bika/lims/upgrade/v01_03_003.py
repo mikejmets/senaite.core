@@ -18,12 +18,16 @@
 # Copyright 2018-2019 by it's authors.
 # Some rights reserved, see README and LICENSE.
 
+from Products.Archetypes.config import UID_CATALOG
+
+from bika.lims import api
 from bika.lims import logger
 from bika.lims.config import PROJECTNAME as product
+from bika.lims.setuphandlers import setup_form_controller_actions
 from bika.lims.upgrade import upgradestep
 from bika.lims.upgrade.utils import UpgradeUtils
 
-version = "2.0.0"  # Remember version number in metadata.xml and setup.py
+version = "1.3.3"  # Remember version number in metadata.xml and setup.py
 profile = "profile-{0}:default".format(product)
 
 
@@ -41,5 +45,50 @@ def upgrade(tool):
 
     logger.info("Upgrading {0}: {1} -> {2}".format(product, ver_from, version))
 
+    # -------- ADD YOUR STUFF BELOW --------
+
+    # https://github.com/senaite/senaite.core/pull/1469
+    setup.runImportStepFromProfile(profile, "propertiestool")
+
+    # Reindex client's related fields (getClientUID, getClientTitle, etc.)
+    # https://github.com/senaite/senaite.core/pull/1477
+    reindex_client_fields(portal)
+
+    # Redirect to worksheets folder when a Worksheet is removed
+    # https://github.com/senaite/senaite.core/pull/1480
+    setup_form_controller_actions(portal)
+
     logger.info("{0} upgraded to version {1}".format(product, version))
     return True
+
+
+def reindex_client_fields(portal):
+    logger.info("Reindexing client fields ...")
+    fields_to_reindex = [
+        "getClientUID",
+        "getClientID",
+        "getClientTitle",
+        "getClientURL"
+    ]
+
+    # We only need to reindex those that might be associated to a Client object.
+    # There is no need to reindex objects that already belong to a Client.
+    # Batches were correctly indexed in previous upgrade step
+    portal_types = [
+        "AnalysisProfile",
+        "AnalysisSpec",
+        "ARTemplate",
+        "SamplePoint"
+    ]
+
+    query = dict(portal_type=portal_types)
+    brains = api.search(query, UID_CATALOG)
+    total = len(brains)
+    for num, brain in enumerate(brains):
+        if num and num % 100 == 0:
+            logger.info("Reindexing client fields: {}/{}".format(num, total))
+
+        obj = api.get_object(brain)
+        obj.reindexObject(idxs=fields_to_reindex)
+
+    logger.info("Reindexing client fields ... [DONE]")
