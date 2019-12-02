@@ -7,14 +7,28 @@ Changelog
 
 **Added**
 
+- #1466 Support for "readonly" and "hidden" visibility modes in ReferenceWidget
+
 
 **Changed**
 
 
 **Removed**
 
+- #1478 Remove AcquireFieldDefaults (was used for CCEmails field only)
 
 **Fixed**
+
+- #1477 Sample edit form - some selection widgets empty
+- #1478 Clients default CC E-Mails missing in Add Sample
+- #1479 Fixed too many redirects error: Labclerks viewing verified worksheets
+- #1480 Worksheet removal results in 404
+- #1475 User with "Analyst" role cannot submit analyses from worksheet
+- #1474 Adding Control Reference to Worksheet causes print fail
+- #1473 Hidden settings of analysis services lost on Sample creation
+- #1472 Secondary samples - removal of analysis profile not possible
+- #1469 Fix Site Properties Generic Setup Export Step
+- #1467 Cannot override behavior of Batch folder when using `before_render`
 
 
 **Security**
