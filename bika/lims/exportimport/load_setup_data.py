@@ -132,10 +132,10 @@ class LoadSetupData(BrowserView):
             logger.info("solved %s of %s deferred references" % (
                 check - new, check))
             if new == check:
-                msg = "%s unsolved deferred references: %s".format(
+                msg = "{} unsolved deferred references: {}".format(
                     len(self.deferred), self.deferred)
                 logger.error(msg)
-                # raise Exception(msg)
+                raise Exception(msg)
             check = new
 
         logger.info("Rebuilding bika_setup_catalog")
