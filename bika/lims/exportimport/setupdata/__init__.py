@@ -1784,7 +1784,7 @@ class Analysis_Specifications(WorksheetImporter):
             if not title:
                 title = row.get("title", False)
                 if not title:
-                    logger.error('Analysis_Specifications: title not found in row ()'.format(
+                    logger.error('Analysis_Specifications: title not found in row {}'.format(
                         count))
                     continue
             parent = row.get("Client_title", "lab")
